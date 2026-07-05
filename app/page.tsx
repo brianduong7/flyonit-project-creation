@@ -1,8 +1,17 @@
 import { listProjects } from "@/lib/store";
+import { listProjectTypes } from "@/lib/erpnext/client";
 import { ProjectForm } from "@/app/components/ProjectForm";
 
 export default async function Home() {
   const projects = await listProjects();
+
+  let projectTypes: string[] = [];
+  let erpNextError: string | null = null;
+  try {
+    projectTypes = await listProjectTypes();
+  } catch (err) {
+    erpNextError = err instanceof Error ? err.message : String(err);
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center bg-zinc-50 font-sans dark:bg-black">
@@ -19,8 +28,14 @@ export default async function Home() {
           </p>
         </header>
 
+        {erpNextError && (
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+            Could not reach ERPNext: {erpNextError}
+          </div>
+        )}
+
         <section className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <ProjectForm />
+          <ProjectForm projectTypes={projectTypes} />
         </section>
 
         <section>

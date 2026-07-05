@@ -11,8 +11,8 @@ import {
   sharePointWorkArea,
   sharePointPath,
 } from "@/lib/naming/generate";
-import { ERPNEXT_PROJECT_TYPES } from "@/lib/naming/constants";
 import { addProject, getNextSequence, projectCodeExists, type ProjectRecord } from "@/lib/store";
+import { createErpNextProject, listProjectTypes } from "@/lib/erpnext/client";
 
 export type CreateProjectState = {
   status: "idle" | "error" | "success";
@@ -52,7 +52,8 @@ export async function createProject(
   if (!scopeTitle) {
     return { status: "error", message: "Scope title is required." };
   }
-  if (!ERPNEXT_PROJECT_TYPES.includes(erpNextProjectType as (typeof ERPNEXT_PROJECT_TYPES)[number])) {
+  const validProjectTypes = await listProjectTypes();
+  if (!validProjectTypes.includes(erpNextProjectType)) {
     return { status: "error", message: "Select a valid ERPNext project type." };
   }
 
@@ -73,10 +74,26 @@ export async function createProject(
     };
   }
 
+  const displayName = buildDisplayName(projectCode, scopeTitle);
   const workArea = sharePointWorkArea(erpNextProjectType);
+
+  let erpNextName: string;
+  try {
+    const created = await createErpNextProject({
+      project_name: displayName,
+      project_type: erpNextProjectType,
+    });
+    erpNextName = created.name;
+  } catch (err) {
+    return {
+      status: "error",
+      message: `ERPNext create failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+
   const record: ProjectRecord = {
     projectCode,
-    displayName: buildDisplayName(projectCode, scopeTitle),
+    displayName,
     clientOrDeptCode,
     clientOrDeptName,
     region,
@@ -87,6 +104,7 @@ export async function createProject(
     erpNextProjectType,
     sharePointPath: sharePointPath(workArea, region, projectCode),
     createdAt: new Date().toISOString(),
+    erpNextName,
   };
 
   await addProject(record);

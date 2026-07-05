@@ -2,13 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { createProject, type CreateProjectState } from "@/app/actions";
-import {
-  REGIONS,
-  SERVICES,
-  ENGAGEMENT_TYPES,
-  DEPARTMENTS,
-  ERPNEXT_PROJECT_TYPES,
-} from "@/lib/naming/constants";
+import { REGIONS, SERVICES, ENGAGEMENT_TYPES, DEPARTMENTS } from "@/lib/naming/constants";
 
 const initialState: CreateProjectState = { status: "idle" };
 
@@ -16,7 +10,7 @@ const inputClass =
   "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50";
 const labelClass = "block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1";
 
-export function ProjectForm() {
+export function ProjectForm({ projectTypes }: { projectTypes: string[] }) {
   const [state, formAction, pending] = useActionState(createProject, initialState);
   const [mode, setMode] = useState<"external" | "internal">("external");
   const [deptCode, setDeptCode] = useState<string>(DEPARTMENTS[0].code);
@@ -166,11 +160,12 @@ export function ProjectForm() {
             className={inputClass}
             required
             defaultValue=""
+            disabled={projectTypes.length === 0}
           >
             <option value="" disabled>
-              Select project type
+              {projectTypes.length === 0 ? "ERPNext unavailable" : "Select project type"}
             </option>
-            {ERPNEXT_PROJECT_TYPES.map((t) => (
+            {projectTypes.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
@@ -208,6 +203,11 @@ export function ProjectForm() {
           <p className="font-mono text-base font-semibold">{state.project.projectCode}</p>
           <p className="mt-1">{state.project.displayName}</p>
           <p className="mt-2 font-mono text-xs opacity-80">{state.project.sharePointPath}</p>
+          {state.project.erpNextName && (
+            <p className="mt-2 text-xs opacity-80">
+              Created in ERPNext as <span className="font-mono">{state.project.erpNextName}</span>
+            </p>
+          )}
         </div>
       )}
     </form>

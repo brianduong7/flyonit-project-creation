@@ -46,9 +46,6 @@ export const DEPARTMENTS = [
   { code: "CS", label: "Customer Success" },
 ] as const;
 
-export const ERPNEXT_PROJECT_TYPES = ["External", "Internal", "Managed Service"] as const;
-
 export type RegionCode = (typeof REGIONS)[number]["code"];
 export type ServiceCode = (typeof SERVICES)[number]["code"];
 export type EngagementTypeCode = (typeof ENGAGEMENT_TYPES)[number]["code"];
-export type ErpNextProjectType = (typeof ERPNEXT_PROJECT_TYPES)[number];

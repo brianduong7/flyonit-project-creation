@@ -16,6 +16,8 @@ export type ProjectRecord = {
   erpNextProjectType: string;
   sharePointPath: string;
   createdAt: string;
+  /** ERPNext's own internal document id (e.g. PROJ-0007), returned after a successful create. */
+  erpNextName?: string;
 };
 
 export async function listProjects(): Promise<ProjectRecord[]> {
