@@ -1,0 +1,58 @@
+[
+  {
+    "projectCode": "ACME-AU-MSP-MGT-003",
+    "displayName": "ACME-AU-MSP-MGT-003 - Managed Service Onboarding",
+    "clientOrDeptCode": "ACME",
+    "clientOrDeptName": "Acme Corporation",
+    "region": "AU",
+    "service": "MSP",
+    "engagementType": "MGT",
+    "sequence": 3,
+    "scopeTitle": "Managed Service Onboarding",
+    "erpNextProjectType": "Managed Service",
+    "sharePointPath": "/Shared Documents/02_Managed_Services/AU/ACME-AU-MSP-MGT-003",
+    "createdAt": "2026-08-01T00:00:00.000Z"
+  },
+  {
+    "projectCode": "ACME-UAE-CYB-AUD-002",
+    "displayName": "ACME-UAE-CYB-AUD-002 - Security Assessment",
+    "clientOrDeptCode": "ACME",
+    "clientOrDeptName": "Acme Corporation",
+    "region": "UAE",
+    "service": "CYB",
+    "engagementType": "AUD",
+    "sequence": 2,
+    "scopeTitle": "Security Assessment",
+    "erpNextProjectType": "External",
+    "sharePointPath": "/Shared Documents/01_Client_Projects/UAE/ACME-UAE-CYB-AUD-002",
+    "createdAt": "2026-07-01T00:00:00.000Z"
+  },
+  {
+    "projectCode": "ACME-AU-AI-IMP-001",
+    "displayName": "ACME-AU-AI-IMP-001 - Copilot Enablement",
+    "clientOrDeptCode": "ACME",
+    "clientOrDeptName": "Acme Corporation",
+    "region": "AU",
+    "service": "AI",
+    "engagementType": "IMP",
+    "sequence": 1,
+    "scopeTitle": "Copilot Enablement",
+    "erpNextProjectType": "External",
+    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/ACME-AU-AI-IMP-001",
+    "createdAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "projectCode": "PMO-GLB-ERP-OPT-001",
+    "displayName": "PMO-GLB-ERP-OPT-001 - F3 Project Template Rollout",
+    "clientOrDeptCode": "PMO",
+    "clientOrDeptName": "Project Management Office",
+    "region": "GLB",
+    "service": "ERP",
+    "engagementType": "OPT",
+    "sequence": 1,
+    "scopeTitle": "F3 Project Template Rollout",
+    "erpNextProjectType": "Internal",
+    "sharePointPath": "/Shared Documents/03_Internal_Projects/GLB/PMO-GLB-ERP-OPT-001",
+    "createdAt": "2026-06-05T00:00:00.000Z"
+  }
+]
