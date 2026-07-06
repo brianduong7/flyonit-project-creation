@@ -247,6 +247,17 @@ export function ProjectForm({
               Project created, but MS Teams group chat failed: {state.project.chatError}
             </p>
           )}
+          {!!state.project.tasksCreated && (
+            <p className="mt-2 text-xs opacity-80">
+              {state.project.tasksCreated} tasks created from{" "}
+              <span className="font-mono">{state.project.taskTemplateCode}</span>
+            </p>
+          )}
+          {state.project.tasksError && (
+            <p className="mt-2 text-xs text-red-700 dark:text-red-400">
+              Project created, but task creation failed: {state.project.tasksError}
+            </p>
+          )}
         </div>
       )}
     </form>

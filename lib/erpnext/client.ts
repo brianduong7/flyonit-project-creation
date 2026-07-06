@@ -104,3 +104,32 @@ export async function createErpNextProject(
   });
   return body.data;
 }
+
+export type ErpNextTaskPayload = {
+  subject: string;
+  project: string;
+  custom_task_phase?: string;
+  priority?: string;
+  exp_start_date?: string;
+  exp_end_date?: string;
+  task_weight?: number;
+  description?: string;
+  /** Real ERPNext Task ids (the "name" field) this task depends on. */
+  depends_on?: { task: string }[];
+};
+
+/**
+ * Creates a Task in ERPNext linked to a project. `type` (Task Type link) is
+ * deliberately not set - this instance's configured Task Type options
+ * (Planning, Setup, Marketing...) don't match the spreadsheet's task-type
+ * values (Assessment, Documentation...), so setting it would fail the same
+ * way the missing Portfolio link did for Project.
+ */
+export async function createErpNextTask(payload: ErpNextTaskPayload): Promise<{ name: string }> {
+  const { url } = config();
+  const body = await erpnextFetch(resourceUrl(url, "Task"), {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return body.data;
+}

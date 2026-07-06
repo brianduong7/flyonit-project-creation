@@ -16,10 +16,11 @@ export default async function Home() {
     return <PasscodeLogin />;
   }
 
-  // Chat status only exists in our local register (ERPNext doesn't know about it),
-  // so join it in by erpNextName once the authoritative project list comes back.
+  // Chat and task-creation status only exist in our local register (ERPNext
+  // doesn't know about either), so join them in by erpNextName once the
+  // authoritative project list comes back.
   const localProjects = await listProjects();
-  const chatByErpNextName = new Map(
+  const localByErpNextName = new Map(
     localProjects.filter((p) => p.erpNextName).map((p) => [p.erpNextName, p])
   );
 
@@ -75,12 +76,13 @@ export default async function Home() {
                   <th className="px-4 py-2">Type</th>
                   <th className="px-4 py-2">Status</th>
                   <th className="px-4 py-2">Chat</th>
+                  <th className="px-4 py-2">Tasks</th>
                   <th className="px-4 py-2">Created</th>
                 </tr>
               </thead>
               <tbody>
                 {projects.map((p) => {
-                  const local = chatByErpNextName.get(p.name);
+                  const local = localByErpNextName.get(p.name);
                   return (
                     <tr key={p.name} className="border-t border-zinc-200 dark:border-zinc-800">
                       <td className="px-4 py-2 font-mono text-xs">{p.project_name}</td>
@@ -93,6 +95,17 @@ export default async function Home() {
                         {local?.chatTopic ? (
                           <span className="font-mono">{local.chatTopic}</span>
                         ) : local?.chatError ? (
+                          <span className="text-red-600 dark:text-red-400">failed</span>
+                        ) : (
+                          <span className="text-zinc-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-xs">
+                        {local?.tasksCreated ? (
+                          <span>
+                            {local.tasksCreated} ({local.taskTemplateCode})
+                          </span>
+                        ) : local?.tasksError ? (
                           <span className="text-red-600 dark:text-red-400">failed</span>
                         ) : (
                           <span className="text-zinc-400">—</span>

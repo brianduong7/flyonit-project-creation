@@ -23,6 +23,10 @@ export type ProjectRecord = {
   /** MS Teams group chat topic, set once the chat is created (see lib/msgraph/client.ts). */
   chatTopic?: string;
   chatError?: string;
+  /** Number of ERPNext Tasks successfully created from the matched project template. */
+  tasksCreated?: number;
+  taskTemplateCode?: string;
+  tasksError?: string;
 };
 
 export async function listProjects(): Promise<ProjectRecord[]> {

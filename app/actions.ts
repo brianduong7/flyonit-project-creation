@@ -12,8 +12,15 @@ import {
   sharePointPath,
 } from "@/lib/naming/generate";
 import { addProject, getNextSequence, projectCodeExists, type ProjectRecord } from "@/lib/store";
-import { createErpNextProject, listPortfolios, listProjectTypes } from "@/lib/erpnext/client";
+import {
+  createErpNextProject,
+  createErpNextTask,
+  listPortfolios,
+  listProjectTypes,
+} from "@/lib/erpnext/client";
 import { createGroupChat, DEFAULT_CHAT_OWNERS } from "@/lib/msgraph/client";
+import { matchProjectTemplate } from "@/lib/tasks/templates";
+import { scheduleTask } from "@/lib/tasks/schedule";
 
 export type CreateProjectState = {
   status: "idle" | "error" | "success";
@@ -111,6 +118,39 @@ export async function createProject(
     chatError = err instanceof Error ? err.message : String(err);
   }
 
+  const template = matchProjectTemplate(service, engagementType);
+  let tasksCreated = 0;
+  let tasksError: string | undefined;
+  if (template) {
+    try {
+      const projectStart = new Date();
+      const createdTaskIds = new Map<number, string>();
+      for (const task of template.tasks) {
+        const { expStartDate, expEndDate } = scheduleTask(projectStart, task);
+        const dependsOn = task.dependsOnTaskNo
+          ? [{ task: createdTaskIds.get(task.dependsOnTaskNo)! }]
+          : undefined;
+        const created = await createErpNextTask({
+          subject: task.subject,
+          project: erpNextName,
+          custom_task_phase: task.phase,
+          priority: task.priority,
+          exp_start_date: expStartDate,
+          exp_end_date: expEndDate,
+          task_weight: task.weightPct / 100,
+          description: `${task.description}\n\nRole: ${task.role}\nTask type: ${task.taskType}\nDeliverable folder: ${task.deliverableFolder}`,
+          depends_on: dependsOn,
+        });
+        createdTaskIds.set(task.taskNo, created.name);
+        tasksCreated++;
+      }
+    } catch (err) {
+      // Best-effort, same reasoning as the chat: the ERPNext project already
+      // exists, so a task-creation hiccup shouldn't fail the whole submission.
+      tasksError = err instanceof Error ? err.message : String(err);
+    }
+  }
+
   const record: ProjectRecord = {
     projectCode,
     displayName,
@@ -128,6 +168,9 @@ export async function createProject(
     erpNextName,
     chatTopic: chatError ? undefined : chatTopic,
     chatError,
+    tasksCreated: tasksCreated || undefined,
+    taskTemplateCode: template?.code,
+    tasksError,
   };
 
   await addProject(record);
