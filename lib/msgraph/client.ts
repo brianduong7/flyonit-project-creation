@@ -1,6 +1,8 @@
 // Server-only. Do not import from client components.
 // Client-credentials (app-only) auth against Microsoft Graph - no interactive sign-in.
 
+const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
+
 function config() {
   const tenantId = process.env.MS_TENANT_ID;
   const clientId = process.env.MS_CLIENT_ID;
@@ -49,7 +51,7 @@ async function getAccessToken(): Promise<string> {
 
 async function graphFetch(path: string, init?: RequestInit) {
   const token = await getAccessToken();
-  const res = await fetch(`https://graph.microsoft.com/v1.0${path}`, {
+  const res = await fetch(`${GRAPH_BASE}${path}`, {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -80,32 +82,62 @@ export const DEFAULT_TEAM_OWNERS: TeamMemberInput[] = [
   { email: "purba@flyonit.com.au", role: "owner" },
 ];
 
+function conversationMember(member: TeamMemberInput) {
+  return {
+    "@odata.type": "#microsoft.graph.aadUserConversationMember",
+    roles: member.role === "owner" ? ["owner"] : [],
+    "user@odata.bind": `${GRAPH_BASE}/users('${member.email}')`,
+  };
+}
+
+/** Polls a teamsAsyncOperation until it succeeds/fails, returning the provisioned team's id. */
+async function waitForTeamProvisioning(
+  operationLocation: string,
+  { maxAttempts = 12, intervalMs = 3000 } = {}
+): Promise<string> {
+  const path = operationLocation.startsWith(GRAPH_BASE)
+    ? operationLocation.slice(GRAPH_BASE.length)
+    : operationLocation;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const body = await graphFetch(path);
+    if (body.status === "succeeded") return body.targetResourceId;
+    if (body.status === "failed") {
+      throw new Error(body.error?.message || "Team provisioning failed");
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  throw new Error("Timed out waiting for Team provisioning to finish");
+}
+
 /**
- * Creates an M365 Group + Team in one call (async - Graph returns 202 while it
- * provisions in the background). Requires Group.ReadWrite.All and Team.Create
- * application permissions.
+ * Creates an M365 Group + Team (async - Graph returns 202 while it provisions
+ * in the background). Requires Group.ReadWrite.All and Team.Create application
+ * permissions.
+ *
+ * Graph's create-team call only accepts a single owner in the initial request
+ * ("Adding more than one member is not supported" otherwise) - so the first
+ * entry in `members` becomes the initial owner, and any remaining members are
+ * added afterward, once provisioning has finished.
  */
 export async function createTeam(params: {
   displayName: string;
   description?: string;
   members: TeamMemberInput[];
-}): Promise<{ operationLocation: string | null }> {
+}): Promise<{ teamId: string }> {
+  const [firstOwner, ...rest] = params.members;
   const token = await getAccessToken();
-  const res = await fetch("https://graph.microsoft.com/v1.0/teams", {
+  const res = await fetch(`${GRAPH_BASE}/teams`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      "template@odata.bind": "https://graph.microsoft.com/v1.0/teamsTemplates('standard')",
+      "template@odata.bind": `${GRAPH_BASE}/teamsTemplates('standard')`,
       displayName: params.displayName,
       description: params.description ?? "",
-      members: params.members.map((m) => ({
-        "@odata.type": "#microsoft.graph.aadUserConversationMember",
-        roles: m.role === "owner" ? ["owner"] : [],
-        "user@odata.bind": `https://graph.microsoft.com/v1.0/users('${m.email}')`,
-      })),
+      members: firstOwner ? [conversationMember(firstOwner)] : [],
     }),
   });
 
@@ -115,5 +147,19 @@ export async function createTeam(params: {
     throw new Error(message);
   }
 
-  return { operationLocation: res.headers.get("Location") };
+  const operationLocation = res.headers.get("Location");
+  if (!operationLocation) {
+    throw new Error("Team creation accepted, but no operation location was returned to track it");
+  }
+
+  const teamId = await waitForTeamProvisioning(operationLocation);
+
+  for (const member of rest) {
+    await graphFetch(`/teams/${teamId}/members`, {
+      method: "POST",
+      body: JSON.stringify(conversationMember(member)),
+    });
+  }
+
+  return { teamId };
 }

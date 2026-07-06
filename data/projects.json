@@ -14,6 +14,22 @@
     "createdAt": "2026-08-01T00:00:00.000Z"
   },
   {
+    "projectCode": "BRIAN-AU-AI-IMP-001",
+    "displayName": "BRIAN-AU-AI-IMP-001 - Super AI",
+    "clientOrDeptCode": "BRIAN",
+    "clientOrDeptName": "Brian Mega Corp",
+    "region": "AU",
+    "service": "AI",
+    "engagementType": "IMP",
+    "sequence": 1,
+    "scopeTitle": "Super AI",
+    "erpNextProjectType": "External",
+    "portfolio": "F3 Project",
+    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/BRIAN-AU-AI-IMP-001",
+    "createdAt": "2026-07-06T00:17:18.141Z",
+    "erpNextName": "PROJ-0180"
+  },
+  {
     "projectCode": "ACME-UAE-CYB-AUD-002",
     "displayName": "ACME-UAE-CYB-AUD-002 - Security Assessment",
     "clientOrDeptCode": "ACME",
@@ -56,19 +72,20 @@
     "createdAt": "2026-06-05T00:00:00.000Z"
   },
   {
-    "projectCode": "BRIAN-AU-AI-IMP-001",
-    "displayName": "BRIAN-AU-AI-IMP-001 - Super AI",
+    "projectCode": "BRIAN-AU-AI-IMP-002",
+    "displayName": "BRIAN-AU-AI-IMP-002 - Super AI Genius",
     "clientOrDeptCode": "BRIAN",
     "clientOrDeptName": "Brian Mega Corp",
     "region": "AU",
     "service": "AI",
     "engagementType": "IMP",
-    "sequence": 1,
-    "scopeTitle": "Super AI",
+    "sequence": 2,
+    "scopeTitle": "Super AI Genius",
     "erpNextProjectType": "External",
     "portfolio": "F3 Project",
-    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/BRIAN-AU-AI-IMP-001",
-    "createdAt": "2026-07-06T00:17:18.141Z",
-    "erpNextName": "PROJ-0180"
+    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/BRIAN-AU-AI-IMP-002",
+    "createdAt": "2026-07-06T01:07:34.670Z",
+    "erpNextName": "PROJ-0180",
+    "teamsError": "Adding more than one member is not supported."
   }
 ]
