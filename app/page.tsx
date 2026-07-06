@@ -71,7 +71,7 @@ export default async function Home() {
               <thead className="bg-zinc-100 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
                 <tr>
                   <th className="px-4 py-2">Project</th>
-                  <th className="px-4 py-2">ERPNext ID</th>
+                  <th className="px-4 py-2">ID</th>
                   <th className="px-4 py-2">Type</th>
                   <th className="px-4 py-2">Status</th>
                   <th className="px-4 py-2">Chat</th>
