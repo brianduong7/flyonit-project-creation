@@ -14,6 +14,23 @@
     "createdAt": "2026-08-01T00:00:00.000Z"
   },
   {
+    "projectCode": "BRIAN-AU-AI-IMP-003",
+    "displayName": "BRIAN-AU-AI-IMP-003 - Super AI God",
+    "clientOrDeptCode": "BRIAN",
+    "clientOrDeptName": "Brian Corpo",
+    "region": "AU",
+    "service": "AI",
+    "engagementType": "IMP",
+    "sequence": 3,
+    "scopeTitle": "Super AI God",
+    "erpNextProjectType": "External",
+    "portfolio": "F3 Project",
+    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/BRIAN-AU-AI-IMP-003",
+    "createdAt": "2026-07-06T01:13:36.019Z",
+    "erpNextName": "PROJ-0180",
+    "teamsError": "GetOperation : Operation id not found for given Team. GroupId:148c04d0-cdeb-48bd-8b70-9eb170fbeeec OperationId:7e69bed3-f09b-4fe6-9bcd-96b746b9346e"
+  },
+  {
     "projectCode": "BRIAN-AU-AI-IMP-002",
     "displayName": "BRIAN-AU-AI-IMP-002 - Super AI Genius",
     "clientOrDeptCode": "BRIAN",
@@ -89,20 +106,20 @@
     "createdAt": "2026-06-05T00:00:00.000Z"
   },
   {
-    "projectCode": "BRIAN-AU-AI-IMP-003",
-    "displayName": "BRIAN-AU-AI-IMP-003 - Super AI God",
-    "clientOrDeptCode": "BRIAN",
-    "clientOrDeptName": "Brian Corpo",
+    "projectCode": "BRIANS-AU-AI-IMP-001",
+    "displayName": "BRIANS-AU-AI-IMP-001 - Super AI AGENT",
+    "clientOrDeptCode": "BRIANS",
+    "clientOrDeptName": "Brian Mega Corpo 2",
     "region": "AU",
     "service": "AI",
     "engagementType": "IMP",
-    "sequence": 3,
-    "scopeTitle": "Super AI God",
+    "sequence": 1,
+    "scopeTitle": "Super AI AGENT",
     "erpNextProjectType": "External",
-    "portfolio": "F3 Project",
-    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/BRIAN-AU-AI-IMP-003",
-    "createdAt": "2026-07-06T01:13:36.019Z",
+    "portfolio": "ANTZ - Project.",
+    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/BRIANS-AU-AI-IMP-001",
+    "createdAt": "2026-07-06T01:18:09.092Z",
     "erpNextName": "PROJ-0180",
-    "teamsError": "GetOperation : Operation id not found for given Team. GroupId:148c04d0-cdeb-48bd-8b70-9eb170fbeeec OperationId:7e69bed3-f09b-4fe6-9bcd-96b746b9346e"
+    "teamName": "TEAM-BRIANS-AU-AI-IMP-001"
   }
 ]

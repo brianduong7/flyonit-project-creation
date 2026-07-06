@@ -98,12 +98,12 @@ export async function createProject(
     };
   }
 
-  const teamName = `TEAM-${projectCode}`;
+  const teamName = displayName;
   let teamsError: string | undefined;
   try {
     await createTeam({
       displayName: teamName,
-      description: displayName,
+      description: scopeTitle,
       members: DEFAULT_TEAM_OWNERS,
     });
   } catch (err) {
