@@ -90,24 +90,39 @@ function conversationMember(member: TeamMemberInput) {
   };
 }
 
-/** Polls a teamsAsyncOperation until it succeeds/fails, returning the provisioned team's id. */
+/**
+ * Polls a teamsAsyncOperation until it succeeds/fails, returning the provisioned team's id.
+ * Right after creation the operation is often not yet queryable at all - Graph returns
+ * "Operation id not found for given Team" instead of a "notStarted"/"running" status - so
+ * a failed lookup is treated as "not ready yet" and retried, not as a hard failure.
+ */
 async function waitForTeamProvisioning(
   operationLocation: string,
-  { maxAttempts = 12, intervalMs = 3000 } = {}
+  { maxAttempts = 20, intervalMs = 3000, initialDelayMs = 5000 } = {}
 ): Promise<string> {
   const path = operationLocation.startsWith(GRAPH_BASE)
     ? operationLocation.slice(GRAPH_BASE.length)
     : operationLocation;
 
+  await new Promise((resolve) => setTimeout(resolve, initialDelayMs));
+
+  let lastError: unknown;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const body = await graphFetch(path);
-    if (body.status === "succeeded") return body.targetResourceId;
-    if (body.status === "failed") {
-      throw new Error(body.error?.message || "Team provisioning failed");
+    try {
+      const body = await graphFetch(path);
+      if (body.status === "succeeded") return body.targetResourceId;
+      if (body.status === "failed") {
+        throw new Error(body.error?.message || "Team provisioning failed");
+      }
+      // status is "notStarted" or "running" - keep polling
+    } catch (err) {
+      lastError = err;
     }
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
-  throw new Error("Timed out waiting for Team provisioning to finish");
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Timed out waiting for Team provisioning to finish");
 }
 
 /**
