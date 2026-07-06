@@ -14,6 +14,8 @@ export type ProjectRecord = {
   sequence: number;
   scopeTitle: string;
   erpNextProjectType: string;
+  /** ERPNext's mandatory "Portfolio" link (custom_work_domain), e.g. "Client Delivery — Projects". */
+  portfolio?: string;
   sharePointPath: string;
   createdAt: string;
   /** ERPNext's own internal document id (e.g. PROJ-0007), returned after a successful create. */

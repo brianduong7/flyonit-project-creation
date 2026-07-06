@@ -12,7 +12,7 @@ import {
   sharePointPath,
 } from "@/lib/naming/generate";
 import { addProject, getNextSequence, projectCodeExists, type ProjectRecord } from "@/lib/store";
-import { createErpNextProject, listProjectTypes } from "@/lib/erpnext/client";
+import { createErpNextProject, listPortfolios, listProjectTypes } from "@/lib/erpnext/client";
 
 export type CreateProjectState = {
   status: "idle" | "error" | "success";
@@ -33,6 +33,7 @@ export async function createProject(
   const engagementType = String(formData.get("engagementType") ?? "");
   const scopeTitle = String(formData.get("scopeTitle") ?? "").trim();
   const erpNextProjectType = String(formData.get("erpNextProjectType") ?? "");
+  const portfolio = String(formData.get("portfolio") ?? "");
 
   if (!isValidClientOrDeptCode(clientOrDeptCode)) {
     return { status: "error", message: "Client/dept code must be 3-8 letters or numbers." };
@@ -55,6 +56,10 @@ export async function createProject(
   const validProjectTypes = await listProjectTypes();
   if (!validProjectTypes.includes(erpNextProjectType)) {
     return { status: "error", message: "Select a valid ERPNext project type." };
+  }
+  const validPortfolios = await listPortfolios();
+  if (!validPortfolios.includes(portfolio)) {
+    return { status: "error", message: "Select a valid Portfolio." };
   }
 
   const sequence = await getNextSequence(clientOrDeptCode);
@@ -82,6 +87,7 @@ export async function createProject(
     const created = await createErpNextProject({
       project_name: displayName,
       project_type: erpNextProjectType,
+      custom_work_domain: portfolio,
     });
     erpNextName = created.name;
   } catch (err) {
@@ -102,6 +108,7 @@ export async function createProject(
     sequence,
     scopeTitle,
     erpNextProjectType,
+    portfolio,
     sharePointPath: sharePointPath(workArea, region, projectCode),
     createdAt: new Date().toISOString(),
     erpNextName,

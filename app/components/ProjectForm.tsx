@@ -10,7 +10,13 @@ const inputClass =
   "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50";
 const labelClass = "block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1";
 
-export function ProjectForm({ projectTypes }: { projectTypes: string[] }) {
+export function ProjectForm({
+  projectTypes,
+  portfolios,
+}: {
+  projectTypes: string[];
+  portfolios: string[];
+}) {
   const [state, formAction, pending] = useActionState(createProject, initialState);
   const [mode, setMode] = useState<"external" | "internal">("external");
   const [deptCode, setDeptCode] = useState<string>(DEPARTMENTS[0].code);
@@ -149,7 +155,7 @@ export function ProjectForm({ projectTypes }: { projectTypes: string[] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div>
           <label className={labelClass} htmlFor="erpNextProjectType">
             ERPNext project type
@@ -168,6 +174,28 @@ export function ProjectForm({ projectTypes }: { projectTypes: string[] }) {
             {projectTypes.map((t) => (
               <option key={t} value={t}>
                 {t}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass} htmlFor="portfolio">
+            Portfolio
+          </label>
+          <select
+            id="portfolio"
+            name="portfolio"
+            className={inputClass}
+            required
+            defaultValue=""
+            disabled={portfolios.length === 0}
+          >
+            <option value="" disabled>
+              {portfolios.length === 0 ? "ERPNext unavailable" : "Select portfolio"}
+            </option>
+            {portfolios.map((p) => (
+              <option key={p} value={p}>
+                {p}
               </option>
             ))}
           </select>

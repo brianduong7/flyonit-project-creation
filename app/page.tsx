@@ -1,14 +1,15 @@
 import { listProjects } from "@/lib/store";
-import { listProjectTypes } from "@/lib/erpnext/client";
+import { listPortfolios, listProjectTypes } from "@/lib/erpnext/client";
 import { ProjectForm } from "@/app/components/ProjectForm";
 
 export default async function Home() {
   const projects = await listProjects();
 
   let projectTypes: string[] = [];
+  let portfolios: string[] = [];
   let erpNextError: string | null = null;
   try {
-    projectTypes = await listProjectTypes();
+    [projectTypes, portfolios] = await Promise.all([listProjectTypes(), listPortfolios()]);
   } catch (err) {
     erpNextError = err instanceof Error ? err.message : String(err);
   }
@@ -35,7 +36,7 @@ export default async function Home() {
         )}
 
         <section className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <ProjectForm projectTypes={projectTypes} />
+          <ProjectForm projectTypes={projectTypes} portfolios={portfolios} />
         </section>
 
         <section>

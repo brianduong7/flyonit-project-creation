@@ -54,9 +54,22 @@ export async function listProjectTypes(): Promise<string[]> {
   return ((body?.data ?? []) as { name: string }[]).map((d) => d.name);
 }
 
+/**
+ * Reads the valid "Portfolio List" options. This instance has a custom mandatory
+ * field on Project (custom_work_domain, labelled "Portfolio") linking to this
+ * doctype - not part of stock ERPNext or the FLYONIT naming spec, but required
+ * for every create call to succeed.
+ */
+export async function listPortfolios(): Promise<string[]> {
+  const { url } = config();
+  const body = await erpnextFetch(resourceUrl(url, "Portfolio List", { limit_page_length: "0" }));
+  return ((body?.data ?? []) as { name: string }[]).map((d) => d.name);
+}
+
 export type ErpNextProjectPayload = {
   project_name: string;
   project_type?: string;
+  custom_work_domain: string;
 };
 
 /** Creates a Project in ERPNext. project_name carries the full ProjectCode - ScopeTitle display name. */
