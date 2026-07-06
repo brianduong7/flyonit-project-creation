@@ -1,8 +1,16 @@
+import { cookies } from "next/headers";
 import { listProjects } from "@/lib/store";
 import { listPortfolios, listProjectTypes } from "@/lib/erpnext/client";
 import { ProjectForm } from "@/app/components/ProjectForm";
+import { PasscodeLogin } from "@/app/components/PasscodeLogin";
+import { AUTH_COOKIE } from "@/lib/auth";
 
 export default async function Home() {
+  const cookieStore = await cookies();
+  if (cookieStore.get(AUTH_COOKIE)?.value !== "granted") {
+    return <PasscodeLogin />;
+  }
+
   const projects = await listProjects();
 
   let projectTypes: string[] = [];
@@ -19,7 +27,7 @@ export default async function Home() {
       <main className="flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-16 sm:px-10">
         <header>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            FLYONIT Project Naming
+            FLYONIT Project Creation
           </h1>
           <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             Generate the official ProjectCode and display name for an approved project. Format:{" "}
