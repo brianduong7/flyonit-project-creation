@@ -1,6 +1,11 @@
 import { cookies } from "next/headers";
 import { listProjects } from "@/lib/store";
-import { listPortfolios, listProjectTypes } from "@/lib/erpnext/client";
+import {
+  listErpNextProjects,
+  listPortfolios,
+  listProjectTypes,
+  type ErpNextProjectSummary,
+} from "@/lib/erpnext/client";
 import { ProjectForm } from "@/app/components/ProjectForm";
 import { PasscodeLogin } from "@/app/components/PasscodeLogin";
 import { AUTH_COOKIE } from "@/lib/auth";
@@ -11,13 +16,23 @@ export default async function Home() {
     return <PasscodeLogin />;
   }
 
-  const projects = await listProjects();
+  // Chat status only exists in our local register (ERPNext doesn't know about it),
+  // so join it in by erpNextName once the authoritative project list comes back.
+  const localProjects = await listProjects();
+  const chatByErpNextName = new Map(
+    localProjects.filter((p) => p.erpNextName).map((p) => [p.erpNextName, p])
+  );
 
+  let projects: ErpNextProjectSummary[] = [];
   let projectTypes: string[] = [];
   let portfolios: string[] = [];
   let erpNextError: string | null = null;
   try {
-    [projectTypes, portfolios] = await Promise.all([listProjectTypes(), listPortfolios()]);
+    [projects, projectTypes, portfolios] = await Promise.all([
+      listErpNextProjects(),
+      listProjectTypes(),
+      listPortfolios(),
+    ]);
   } catch (err) {
     erpNextError = err instanceof Error ? err.message : String(err);
   }
@@ -55,36 +70,40 @@ export default async function Home() {
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead className="bg-zinc-100 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
                 <tr>
-                  <th className="px-4 py-2">Project code</th>
-                  <th className="px-4 py-2">Scope</th>
+                  <th className="px-4 py-2">Project</th>
+                  <th className="px-4 py-2">ERPNext ID</th>
                   <th className="px-4 py-2">Type</th>
+                  <th className="px-4 py-2">Status</th>
                   <th className="px-4 py-2">Chat</th>
                   <th className="px-4 py-2">Created</th>
                 </tr>
               </thead>
               <tbody>
-                {projects.map((p) => (
-                  <tr
-                    key={p.projectCode}
-                    className="border-t border-zinc-200 dark:border-zinc-800"
-                  >
-                    <td className="px-4 py-2 font-mono text-xs">{p.projectCode}</td>
-                    <td className="px-4 py-2">{p.scopeTitle}</td>
-                    <td className="px-4 py-2">{p.erpNextProjectType}</td>
-                    <td className="px-4 py-2 text-xs">
-                      {p.chatTopic ? (
-                        <span className="font-mono">{p.chatTopic}</span>
-                      ) : p.chatError ? (
-                        <span className="text-red-600 dark:text-red-400">failed</span>
-                      ) : (
-                        <span className="text-zinc-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-zinc-500 dark:text-zinc-400">
-                      {new Date(p.createdAt).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
+                {projects.map((p) => {
+                  const local = chatByErpNextName.get(p.name);
+                  return (
+                    <tr key={p.name} className="border-t border-zinc-200 dark:border-zinc-800">
+                      <td className="px-4 py-2 font-mono text-xs">{p.project_name}</td>
+                      <td className="px-4 py-2 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+                        {p.name}
+                      </td>
+                      <td className="px-4 py-2">{p.project_type ?? "—"}</td>
+                      <td className="px-4 py-2">{p.status}</td>
+                      <td className="px-4 py-2 text-xs">
+                        {local?.chatTopic ? (
+                          <span className="font-mono">{local.chatTopic}</span>
+                        ) : local?.chatError ? (
+                          <span className="text-red-600 dark:text-red-400">failed</span>
+                        ) : (
+                          <span className="text-zinc-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-zinc-500 dark:text-zinc-400">
+                        {new Date(p.creation).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

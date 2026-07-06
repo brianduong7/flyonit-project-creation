@@ -66,6 +66,27 @@ export async function listPortfolios(): Promise<string[]> {
   return ((body?.data ?? []) as { name: string }[]).map((d) => d.name);
 }
 
+export type ErpNextProjectSummary = {
+  name: string;
+  project_name: string;
+  status: string;
+  project_type: string | null;
+  creation: string;
+};
+
+/** Reads projects directly from ERPNext (the system of record) for display in the register. */
+export async function listErpNextProjects(limit = 100): Promise<ErpNextProjectSummary[]> {
+  const { url } = config();
+  const body = await erpnextFetch(
+    resourceUrl(url, "Project", {
+      fields: JSON.stringify(["name", "project_name", "status", "project_type", "creation"]),
+      order_by: "creation desc",
+      limit_page_length: String(limit),
+    })
+  );
+  return (body?.data ?? []) as ErpNextProjectSummary[];
+}
+
 export type ErpNextProjectPayload = {
   project_name: string;
   project_type?: string;
