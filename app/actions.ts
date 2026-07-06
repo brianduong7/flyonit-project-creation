@@ -13,7 +13,7 @@ import {
 } from "@/lib/naming/generate";
 import { addProject, getNextSequence, projectCodeExists, type ProjectRecord } from "@/lib/store";
 import { createErpNextProject, listPortfolios, listProjectTypes } from "@/lib/erpnext/client";
-import { createTeam, DEFAULT_TEAM_OWNERS } from "@/lib/msgraph/client";
+import { createGroupChat, DEFAULT_CHAT_OWNERS } from "@/lib/msgraph/client";
 
 export type CreateProjectState = {
   status: "idle" | "error" | "success";
@@ -98,18 +98,17 @@ export async function createProject(
     };
   }
 
-  const teamName = displayName;
-  let teamsError: string | undefined;
+  const chatTopic = displayName;
+  let chatError: string | undefined;
   try {
-    await createTeam({
-      displayName: teamName,
-      description: scopeTitle,
-      members: DEFAULT_TEAM_OWNERS,
+    await createGroupChat({
+      topic: chatTopic,
+      members: DEFAULT_CHAT_OWNERS,
     });
   } catch (err) {
-    // Best-effort: the ERPNext project is the record that matters, so a Teams
-    // hiccup shouldn't fail the whole submission.
-    teamsError = err instanceof Error ? err.message : String(err);
+    // Best-effort: the ERPNext project is the record that matters, so a chat
+    // creation hiccup shouldn't fail the whole submission.
+    chatError = err instanceof Error ? err.message : String(err);
   }
 
   const record: ProjectRecord = {
@@ -127,8 +126,8 @@ export async function createProject(
     sharePointPath: sharePointPath(workArea, region, projectCode),
     createdAt: new Date().toISOString(),
     erpNextName,
-    teamName: teamsError ? undefined : teamName,
-    teamsError,
+    chatTopic: chatError ? undefined : chatTopic,
+    chatError,
   };
 
   await addProject(record);

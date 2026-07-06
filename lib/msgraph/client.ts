@@ -73,16 +73,16 @@ export async function getTenantName(): Promise<string> {
   return body?.value?.[0]?.displayName ?? "";
 }
 
-export type TeamMemberInput = { email: string; role?: "owner" | "member" };
+export type ChatMemberInput = { email: string; role?: "owner" | "member" };
 
-/** Always added as Owners on every project Team, in addition to the project's own PM/team. */
-export const DEFAULT_TEAM_OWNERS: TeamMemberInput[] = [
+/** Always added to every project group chat, in addition to the project's own PM/team. */
+export const DEFAULT_CHAT_OWNERS: ChatMemberInput[] = [
   { email: "mahesh@flyonit.com.au", role: "owner" },
   { email: "rani@flyonit.com.au", role: "owner" },
   { email: "purba@flyonit.com.au", role: "owner" },
 ];
 
-function conversationMember(member: TeamMemberInput) {
+function conversationMember(member: ChatMemberInput) {
   return {
     "@odata.type": "#microsoft.graph.aadUserConversationMember",
     roles: member.role === "owner" ? ["owner"] : [],
@@ -91,90 +91,23 @@ function conversationMember(member: TeamMemberInput) {
 }
 
 /**
- * Polls a teamsAsyncOperation until it succeeds/fails, returning the provisioned team's id.
- * Right after creation the operation is often not yet queryable at all - Graph returns
- * "Operation id not found for given Team" instead of a "notStarted"/"running" status - so
- * a failed lookup is treated as "not ready yet" and retried, not as a hard failure.
+ * Creates a plain MS Teams group chat (not a full Team - no channels, no
+ * SharePoint site, just a chat thread). Unlike Team creation this is
+ * synchronous and returns the finished chat directly, no async polling
+ * needed. Requires the Chat.Create application permission. A group chat
+ * needs at least 2 members.
  */
-async function waitForTeamProvisioning(
-  operationLocation: string,
-  { maxAttempts = 20, intervalMs = 3000, initialDelayMs = 5000 } = {}
-): Promise<string> {
-  const path = operationLocation.startsWith(GRAPH_BASE)
-    ? operationLocation.slice(GRAPH_BASE.length)
-    : operationLocation;
-
-  await new Promise((resolve) => setTimeout(resolve, initialDelayMs));
-
-  let lastError: unknown;
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    try {
-      const body = await graphFetch(path);
-      if (body.status === "succeeded") return body.targetResourceId;
-      if (body.status === "failed") {
-        throw new Error(body.error?.message || "Team provisioning failed");
-      }
-      // status is "notStarted" or "running" - keep polling
-    } catch (err) {
-      lastError = err;
-    }
-    await new Promise((resolve) => setTimeout(resolve, intervalMs));
-  }
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("Timed out waiting for Team provisioning to finish");
-}
-
-/**
- * Creates an M365 Group + Team (async - Graph returns 202 while it provisions
- * in the background). Requires Group.ReadWrite.All and Team.Create application
- * permissions.
- *
- * Graph's create-team call only accepts a single owner in the initial request
- * ("Adding more than one member is not supported" otherwise) - so the first
- * entry in `members` becomes the initial owner, and any remaining members are
- * added afterward, once provisioning has finished.
- */
-export async function createTeam(params: {
-  displayName: string;
-  description?: string;
-  members: TeamMemberInput[];
-}): Promise<{ teamId: string }> {
-  const [firstOwner, ...rest] = params.members;
-  const token = await getAccessToken();
-  const res = await fetch(`${GRAPH_BASE}/teams`, {
+export async function createGroupChat(params: {
+  topic: string;
+  members: ChatMemberInput[];
+}): Promise<{ chatId: string }> {
+  const body = await graphFetch("/chats", {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify({
-      "template@odata.bind": `${GRAPH_BASE}/teamsTemplates('standard')`,
-      displayName: params.displayName,
-      description: params.description ?? "",
-      members: firstOwner ? [conversationMember(firstOwner)] : [],
+      chatType: "group",
+      topic: params.topic,
+      members: params.members.map(conversationMember),
     }),
   });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    const message = body?.error?.message || `Team creation failed (${res.status})`;
-    throw new Error(message);
-  }
-
-  const operationLocation = res.headers.get("Location");
-  if (!operationLocation) {
-    throw new Error("Team creation accepted, but no operation location was returned to track it");
-  }
-
-  const teamId = await waitForTeamProvisioning(operationLocation);
-
-  for (const member of rest) {
-    await graphFetch(`/teams/${teamId}/members`, {
-      method: "POST",
-      body: JSON.stringify(conversationMember(member)),
-    });
-  }
-
-  return { teamId };
+  return { chatId: body.id };
 }
