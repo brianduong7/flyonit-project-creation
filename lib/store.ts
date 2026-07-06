@@ -20,6 +20,8 @@ export type ProjectRecord = {
   createdAt: string;
   /** ERPNext's own internal document id (e.g. PROJ-0007), returned after a successful create. */
   erpNextName?: string;
+  teamName?: string;
+  teamsError?: string;
 };
 
 export async function listProjects(): Promise<ProjectRecord[]> {

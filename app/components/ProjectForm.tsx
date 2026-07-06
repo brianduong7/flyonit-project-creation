@@ -236,6 +236,17 @@ export function ProjectForm({
               Created in ERPNext as <span className="font-mono">{state.project.erpNextName}</span>
             </p>
           )}
+          {state.project.teamName && (
+            <p className="mt-2 text-xs opacity-80">
+              MS Teams group <span className="font-mono">{state.project.teamName}</span> is
+              provisioning (Mahesh, Rani and Purba added as owners)
+            </p>
+          )}
+          {state.project.teamsError && (
+            <p className="mt-2 text-xs text-red-700 dark:text-red-400">
+              Project created, but MS Teams group failed: {state.project.teamsError}
+            </p>
+          )}
         </div>
       )}
     </form>

@@ -50,6 +50,7 @@ export default async function Home() {
                   <th className="px-4 py-2">Project code</th>
                   <th className="px-4 py-2">Scope</th>
                   <th className="px-4 py-2">Type</th>
+                  <th className="px-4 py-2">Team</th>
                   <th className="px-4 py-2">Created</th>
                 </tr>
               </thead>
@@ -62,6 +63,15 @@ export default async function Home() {
                     <td className="px-4 py-2 font-mono text-xs">{p.projectCode}</td>
                     <td className="px-4 py-2">{p.scopeTitle}</td>
                     <td className="px-4 py-2">{p.erpNextProjectType}</td>
+                    <td className="px-4 py-2 text-xs">
+                      {p.teamName ? (
+                        <span className="font-mono">{p.teamName}</span>
+                      ) : p.teamsError ? (
+                        <span className="text-red-600 dark:text-red-400">failed</span>
+                      ) : (
+                        <span className="text-zinc-400">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-2 text-zinc-500 dark:text-zinc-400">
                       {new Date(p.createdAt).toLocaleDateString()}
                     </td>

@@ -13,6 +13,7 @@ import {
 } from "@/lib/naming/generate";
 import { addProject, getNextSequence, projectCodeExists, type ProjectRecord } from "@/lib/store";
 import { createErpNextProject, listPortfolios, listProjectTypes } from "@/lib/erpnext/client";
+import { createTeam, DEFAULT_TEAM_OWNERS } from "@/lib/msgraph/client";
 
 export type CreateProjectState = {
   status: "idle" | "error" | "success";
@@ -97,6 +98,20 @@ export async function createProject(
     };
   }
 
+  const teamName = `TEAM-${projectCode}`;
+  let teamsError: string | undefined;
+  try {
+    await createTeam({
+      displayName: teamName,
+      description: displayName,
+      members: DEFAULT_TEAM_OWNERS,
+    });
+  } catch (err) {
+    // Best-effort: the ERPNext project is the record that matters, so a Teams
+    // hiccup shouldn't fail the whole submission.
+    teamsError = err instanceof Error ? err.message : String(err);
+  }
+
   const record: ProjectRecord = {
     projectCode,
     displayName,
@@ -112,6 +127,8 @@ export async function createProject(
     sharePointPath: sharePointPath(workArea, region, projectCode),
     createdAt: new Date().toISOString(),
     erpNextName,
+    teamName: teamsError ? undefined : teamName,
+    teamsError,
   };
 
   await addProject(record);

@@ -54,5 +54,21 @@
     "erpNextProjectType": "Internal",
     "sharePointPath": "/Shared Documents/03_Internal_Projects/GLB/PMO-GLB-ERP-OPT-001",
     "createdAt": "2026-06-05T00:00:00.000Z"
+  },
+  {
+    "projectCode": "BRIAN-AU-AI-IMP-001",
+    "displayName": "BRIAN-AU-AI-IMP-001 - Super AI",
+    "clientOrDeptCode": "BRIAN",
+    "clientOrDeptName": "Brian Mega Corp",
+    "region": "AU",
+    "service": "AI",
+    "engagementType": "IMP",
+    "sequence": 1,
+    "scopeTitle": "Super AI",
+    "erpNextProjectType": "External",
+    "portfolio": "F3 Project",
+    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/BRIAN-AU-AI-IMP-001",
+    "createdAt": "2026-07-06T00:17:18.141Z",
+    "erpNextName": "PROJ-0180"
   }
 ]
