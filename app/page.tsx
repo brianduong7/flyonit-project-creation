@@ -29,7 +29,7 @@ export default async function Home() {
   let erpNextError: string | null = null;
   try {
     [projects, projectTypes, portfolios] = await Promise.all([
-      listErpNextProjects(),
+      listErpNextProjects(5),
       listProjectTypes(),
       listPortfolios(),
     ]);
