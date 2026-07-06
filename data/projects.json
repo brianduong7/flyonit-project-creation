@@ -1,5 +1,22 @@
 [
   {
+    "projectCode": "BRIAN-AU-AI-IMP-006",
+    "displayName": "BRIAN-AU-AI-IMP-006 - Super AI Agent 3",
+    "clientOrDeptCode": "BRIAN",
+    "clientOrDeptName": "Brian Mega AI Corpo",
+    "region": "AU",
+    "service": "AI",
+    "engagementType": "IMP",
+    "sequence": 6,
+    "scopeTitle": "Super AI Agent 3",
+    "erpNextProjectType": "External",
+    "portfolio": "Client Delivery — Projects",
+    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/BRIAN-AU-AI-IMP-006",
+    "createdAt": "2026-07-06T01:52:45.113Z",
+    "erpNextName": "PROJ-0181",
+    "chatTopic": "BRIAN-AU-AI-IMP-006 - Super AI Agent 3"
+  },
+  {
     "projectCode": "BRIAN-AU-AI-IMP-005",
     "displayName": "BRIAN-AU-AI-IMP-005 - Super AI Admin",
     "clientOrDeptCode": "BRIAN",
@@ -101,20 +118,22 @@
     "erpNextName": "PROJ-0180"
   },
   {
-    "projectCode": "BRIAN-AU-AI-IMP-006",
-    "displayName": "BRIAN-AU-AI-IMP-006 - Super AI Agent 3",
+    "projectCode": "BRIAN-AU-AI-IMP-007",
+    "displayName": "BRIAN-AU-AI-IMP-007 - Super AI Agent",
     "clientOrDeptCode": "BRIAN",
-    "clientOrDeptName": "Brian Mega AI Corpo",
+    "clientOrDeptName": "Brian Super Corp",
     "region": "AU",
     "service": "AI",
     "engagementType": "IMP",
-    "sequence": 6,
-    "scopeTitle": "Super AI Agent 3",
+    "sequence": 7,
+    "scopeTitle": "Super AI Agent",
     "erpNextProjectType": "External",
-    "portfolio": "Client Delivery — Projects",
-    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/BRIAN-AU-AI-IMP-006",
-    "createdAt": "2026-07-06T01:52:45.113Z",
-    "erpNextName": "PROJ-0181",
-    "chatTopic": "BRIAN-AU-AI-IMP-006 - Super AI Agent 3"
+    "portfolio": "F3 Project",
+    "sharePointPath": "/Shared Documents/01_Client_Projects/AU/BRIAN-AU-AI-IMP-007",
+    "createdAt": "2026-07-06T06:29:16.585Z",
+    "erpNextName": "PROJ-0185",
+    "chatTopic": "BRIAN-AU-AI-IMP-007 - Super AI Agent",
+    "tasksCreated": 10,
+    "taskTemplateCode": "TPL-EXT-AI-IMP"
   }
 ]

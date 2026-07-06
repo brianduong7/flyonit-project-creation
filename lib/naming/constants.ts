@@ -36,7 +36,7 @@ export const ENGAGEMENT_TYPES = [
 
 // Internal department codes. External clients use a free-typed 3-8 char code instead.
 export const DEPARTMENTS = [
-  { code: "INT", label: "Internal / cross-department" },
+  { code: "FOIT", label: "FOIT / cross-department" },
   { code: "PMO", label: "Project Management Office / Governance" },
   { code: "MKT", label: "Sales & Marketing" },
   { code: "PPL", label: "People & Culture" },
