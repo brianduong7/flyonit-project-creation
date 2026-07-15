@@ -105,6 +105,49 @@ export async function createErpNextProject(
   return body.data;
 }
 
+/**
+ * Highest ### sequence for a client/dept code, derived from ERPNext project
+ * display names (`CODE-REGION-SERVICE-ENG-### - Scope`). Used on Vercel where
+ * the local JSON register cannot be updated.
+ */
+export async function getMaxSequenceFromErpNext(clientOrDeptCode: string): Promise<number> {
+  const { url } = config();
+  const body = await erpnextFetch(
+    resourceUrl(url, "Project", {
+      fields: JSON.stringify(["project_name"]),
+      filters: JSON.stringify([["project_name", "like", `${clientOrDeptCode}-%`]]),
+      limit_page_length: "0",
+    })
+  );
+  const pattern = new RegExp(
+    `^${escapeRegExp(clientOrDeptCode)}-[A-Z0-9]+-[A-Z0-9]+-[A-Z0-9]+-(\\d+)(?:\\s|$)`,
+    "i"
+  );
+  let highest = 0;
+  for (const row of (body?.data ?? []) as { project_name: string }[]) {
+    const match = row.project_name.match(pattern);
+    if (match) highest = Math.max(highest, Number(match[1]));
+  }
+  return highest;
+}
+
+/** True if an ERPNext project already uses this ProjectCode in its display name. */
+export async function projectCodeExistsInErpNext(projectCode: string): Promise<boolean> {
+  const { url } = config();
+  const body = await erpnextFetch(
+    resourceUrl(url, "Project", {
+      fields: JSON.stringify(["name"]),
+      filters: JSON.stringify([["project_name", "like", `${projectCode}%`]]),
+      limit_page_length: "1",
+    })
+  );
+  return ((body?.data ?? []) as unknown[]).length > 0;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export type ErpNextTaskPayload = {
   subject: string;
   project: string;

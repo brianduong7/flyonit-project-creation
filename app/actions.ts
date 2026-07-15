@@ -15,8 +15,10 @@ import { addProject, getNextSequence, projectCodeExists, type ProjectRecord } fr
 import {
   createErpNextProject,
   createErpNextTask,
+  getMaxSequenceFromErpNext,
   listPortfolios,
   listProjectTypes,
+  projectCodeExistsInErpNext,
 } from "@/lib/erpnext/client";
 import { createGroupChat, DEFAULT_CHAT_OWNERS } from "@/lib/msgraph/client";
 import { matchProjectTemplate } from "@/lib/tasks/templates";
@@ -70,7 +72,13 @@ export async function createProject(
     return { status: "error", message: "Select a valid Portfolio." };
   }
 
-  const sequence = await getNextSequence(clientOrDeptCode);
+  // Prefer the higher of local register + ERPNext so sequences stay unique on
+  // Vercel, where data/projects.json cannot be written.
+  const [localNext, erpMax] = await Promise.all([
+    getNextSequence(clientOrDeptCode),
+    getMaxSequenceFromErpNext(clientOrDeptCode).catch(() => 0),
+  ]);
+  const sequence = Math.max(localNext, erpMax + 1);
   const projectCode = buildProjectCode({
     clientOrDeptCode,
     region,
@@ -80,7 +88,11 @@ export async function createProject(
   });
 
   // Guard against a race where two submissions land on the same sequence number.
-  if (await projectCodeExists(projectCode)) {
+  const [localExists, erpExists] = await Promise.all([
+    projectCodeExists(projectCode),
+    projectCodeExistsInErpNext(projectCode).catch(() => false),
+  ]);
+  if (localExists || erpExists) {
     return {
       status: "error",
       message: `${projectCode} already exists. Please try again.`,
@@ -173,6 +185,7 @@ export async function createProject(
     tasksError,
   };
 
+  // Best-effort local register — must not fail the request after ERPNext create.
   await addProject(record);
   revalidatePath("/");
 

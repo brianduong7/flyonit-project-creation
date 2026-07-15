@@ -49,8 +49,18 @@ export async function projectCodeExists(projectCode: string): Promise<boolean> {
   return records.some((r) => r.projectCode === projectCode);
 }
 
-export async function addProject(record: ProjectRecord): Promise<void> {
-  const records = await listProjects();
-  records.push(record);
-  await writeFile(DATA_FILE, JSON.stringify(records, null, 2), "utf-8");
+/**
+ * Persist to the local JSON register when the filesystem is writable (local
+ * / self-hosted). On Vercel the deploy filesystem is read-only, so a write
+ * failure is ignored — ERPNext remains the system of record.
+ */
+export async function addProject(record: ProjectRecord): Promise<boolean> {
+  try {
+    const records = await listProjects();
+    records.push(record);
+    await writeFile(DATA_FILE, JSON.stringify(records, null, 2), "utf-8");
+    return true;
+  } catch {
+    return false;
+  }
 }
