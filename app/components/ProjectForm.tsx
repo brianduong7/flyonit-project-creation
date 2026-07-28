@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { createProject, type CreateProjectState } from "@/app/actions";
 import { REGIONS, SERVICES, ENGAGEMENT_TYPES, DEPARTMENTS } from "@/lib/naming/constants";
+import { PROJECT_TEMPLATE_NAMES } from "@/lib/tasks/templates";
 
 const initialState: CreateProjectState = { status: "idle" };
 
@@ -23,6 +24,29 @@ export function ProjectForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
+      <div>
+        <label className={labelClass} htmlFor="projectTemplate">
+          Project template
+        </label>
+        <select
+          id="projectTemplate"
+          name="projectTemplate"
+          className={inputClass}
+          defaultValue=""
+        >
+          <option value="">No template (no tasks)</option>
+          {PROJECT_TEMPLATE_NAMES.map((name) => (
+            <option key={name} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Optional. When set, tasks come from this template plus any match for
+          service + engagement type.
+        </p>
+      </div>
+
       <fieldset className="flex gap-4 text-sm">
         <legend className={labelClass}>Client type</legend>
         <label className="flex items-center gap-2">
@@ -252,6 +276,9 @@ export function ProjectForm({
               {state.project.tasksCreated} tasks created from{" "}
               <span className="font-mono">{state.project.taskTemplateCode}</span>
             </p>
+          )}
+          {!state.project.tasksCreated && !state.project.tasksError && (
+            <p className="mt-2 text-xs opacity-80">No project template selected — no tasks created.</p>
           )}
           {state.project.tasksError && (
             <p className="mt-2 text-xs text-red-700 dark:text-red-400">

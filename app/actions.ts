@@ -21,8 +21,12 @@ import {
   projectCodeExistsInErpNext,
 } from "@/lib/erpnext/client";
 import { createGroupChat, DEFAULT_CHAT_OWNERS } from "@/lib/msgraph/client";
-import { matchProjectTemplate } from "@/lib/tasks/templates";
-import { scheduleTask } from "@/lib/tasks/schedule";
+import {
+  getProjectTemplateByName,
+  matchProjectTemplate,
+  unionTemplateTasks,
+} from "@/lib/tasks/templates";
+import { scheduleTaskSequential } from "@/lib/tasks/schedule";
 
 export type CreateProjectState = {
   status: "idle" | "error" | "success";
@@ -44,6 +48,7 @@ export async function createProject(
   const scopeTitle = String(formData.get("scopeTitle") ?? "").trim();
   const erpNextProjectType = String(formData.get("erpNextProjectType") ?? "");
   const portfolio = String(formData.get("portfolio") ?? "");
+  const projectTemplateName = String(formData.get("projectTemplate") ?? "").trim();
 
   if (!isValidClientOrDeptCode(clientOrDeptCode)) {
     return { status: "error", message: "Client/dept code must be 3-8 letters or numbers." };
@@ -62,6 +67,12 @@ export async function createProject(
   }
   if (!scopeTitle) {
     return { status: "error", message: "Scope title is required." };
+  }
+  const selectedTemplate = projectTemplateName
+    ? getProjectTemplateByName(projectTemplateName)
+    : null;
+  if (projectTemplateName && !selectedTemplate) {
+    return { status: "error", message: "Select a valid project template." };
   }
   const validProjectTypes = await listProjectTypes();
   if (!validProjectTypes.includes(erpNextProjectType)) {
@@ -130,30 +141,27 @@ export async function createProject(
     chatError = err instanceof Error ? err.message : String(err);
   }
 
-  const template = matchProjectTemplate(service, engagementType);
+  // Tasks only when a project template is selected. Then union selected +
+  // service/engagement auto-match (deduped by subject).
   let tasksCreated = 0;
   let tasksError: string | undefined;
-  if (template) {
+  let taskTemplateCode: string | undefined;
+  if (selectedTemplate) {
+    const matched = matchProjectTemplate(service, engagementType);
+    const { tasks, sources } = unionTemplateTasks(selectedTemplate, matched);
+    taskTemplateCode = sources.join(" + ");
     try {
       const projectStart = new Date();
-      const createdTaskIds = new Map<number, string>();
-      for (const task of template.tasks) {
-        const { expStartDate, expEndDate } = scheduleTask(projectStart, task);
-        const dependsOn = task.dependsOnTaskNo
-          ? [{ task: createdTaskIds.get(task.dependsOnTaskNo)! }]
-          : undefined;
-        const created = await createErpNextTask({
+      for (let i = 0; i < tasks.length; i++) {
+        const task = tasks[i];
+        const { expStartDate, expEndDate } = scheduleTaskSequential(projectStart, i);
+        await createErpNextTask({
           subject: task.subject,
           project: erpNextName,
-          custom_task_phase: task.phase,
-          priority: task.priority,
           exp_start_date: expStartDate,
           exp_end_date: expEndDate,
-          task_weight: task.weightPct / 100,
-          description: `${task.description}\n\nRole: ${task.role}\nTask type: ${task.taskType}\nDeliverable folder: ${task.deliverableFolder}`,
-          depends_on: dependsOn,
+          description: `Source task: ${task.sourceTaskId}`,
         });
-        createdTaskIds.set(task.taskNo, created.name);
         tasksCreated++;
       }
     } catch (err) {
@@ -181,7 +189,7 @@ export async function createProject(
     chatTopic: chatError ? undefined : chatTopic,
     chatError,
     tasksCreated: tasksCreated || undefined,
-    taskTemplateCode: template?.code,
+    taskTemplateCode,
     tasksError,
   };
 
