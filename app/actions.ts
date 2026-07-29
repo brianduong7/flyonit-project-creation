@@ -48,7 +48,10 @@ export async function createProject(
   const scopeTitle = String(formData.get("scopeTitle") ?? "").trim();
   const erpNextProjectType = String(formData.get("erpNextProjectType") ?? "");
   const portfolio = String(formData.get("portfolio") ?? "");
-  const projectTemplateName = String(formData.get("projectTemplate") ?? "").trim();
+  const projectTemplateNames = formData
+    .getAll("projectTemplates")
+    .map((v) => String(v).trim())
+    .filter(Boolean);
 
   if (!isValidClientOrDeptCode(clientOrDeptCode)) {
     return { status: "error", message: "Client/dept code must be 3-8 letters or numbers." };
@@ -68,12 +71,13 @@ export async function createProject(
   if (!scopeTitle) {
     return { status: "error", message: "Scope title is required." };
   }
-  const selectedTemplate = projectTemplateName
-    ? getProjectTemplateByName(projectTemplateName)
-    : null;
-  if (projectTemplateName && !selectedTemplate) {
-    return { status: "error", message: "Select a valid project template." };
+  const selectedTemplates = projectTemplateNames.map((name) => getProjectTemplateByName(name));
+  if (selectedTemplates.some((t) => !t)) {
+    return { status: "error", message: "One or more project templates are invalid." };
   }
+  const resolvedSelected = selectedTemplates.filter(
+    (t): t is NonNullable<typeof t> => t != null
+  );
   const validProjectTypes = await listProjectTypes();
   if (!validProjectTypes.includes(erpNextProjectType)) {
     return { status: "error", message: "Select a valid ERPNext project type." };
@@ -141,14 +145,18 @@ export async function createProject(
     chatError = err instanceof Error ? err.message : String(err);
   }
 
-  // Tasks only when a project template is selected. Then union selected +
-  // service/engagement auto-match (deduped by subject).
+  // Tasks only when at least one project template is selected. Then union
+  // all selected templates + service/engagement auto-match (deduped by subject).
   let tasksCreated = 0;
   let tasksError: string | undefined;
   let taskTemplateCode: string | undefined;
-  if (selectedTemplate) {
+  if (resolvedSelected.length > 0) {
     const matched = matchProjectTemplate(service, engagementType);
-    const { tasks, sources } = unionTemplateTasks(selectedTemplate, matched);
+    const toUnion = [...resolvedSelected];
+    if (matched && !toUnion.some((t) => t.name === matched.name)) {
+      toUnion.push(matched);
+    }
+    const { tasks, sources } = unionTemplateTasks(toUnion);
     taskTemplateCode = sources.join(" + ");
     try {
       const projectStart = new Date();

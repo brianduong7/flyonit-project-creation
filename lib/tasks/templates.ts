@@ -293,19 +293,17 @@ export function matchProjectTemplate(service: string, engagementType: string): P
 }
 
 /**
- * Union tasks from selected + service/engagement templates, deduped by subject
- * (case-insensitive). Selected-template order first, then matched extras.
+ * Union tasks from multiple templates, deduped by subject (case-insensitive).
+ * Order follows the templates array (selected first, then auto-match extras).
  */
 export function unionTemplateTasks(
-  selected: ProjectTemplate | null,
-  matched: ProjectTemplate | null
+  templates: ProjectTemplate[]
 ): { tasks: TaskDefinition[]; sources: string[] } {
   const sources: string[] = [];
   const seen = new Set<string>();
   const tasks: TaskDefinition[] = [];
-  for (const tpl of [selected, matched]) {
-    if (!tpl) continue;
-    sources.push(tpl.name);
+  for (const tpl of templates) {
+    if (!sources.includes(tpl.name)) sources.push(tpl.name);
     for (const task of tpl.tasks) {
       const key = task.subject.trim().toLowerCase();
       if (seen.has(key)) continue;

@@ -21,30 +21,69 @@ export function ProjectForm({
   const [state, formAction, pending] = useActionState(createProject, initialState);
   const [mode, setMode] = useState<"external" | "internal">("external");
   const [deptCode, setDeptCode] = useState<string>(DEPARTMENTS[0].code);
+  const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
+
+  const availableTemplates = PROJECT_TEMPLATE_NAMES.filter(
+    (name) => !selectedTemplates.includes(name)
+  );
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
       <div>
-        <label className={labelClass} htmlFor="projectTemplate">
-          Project template
+        <label className={labelClass} htmlFor="projectTemplateAdd">
+          Project templates
         </label>
+        <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
+          Optional. Add one or more from the list. Leave none to create no tasks.
+          Tasks also include any match for service + engagement type.
+        </p>
         <select
-          id="projectTemplate"
-          name="projectTemplate"
+          id="projectTemplateAdd"
           className={inputClass}
-          defaultValue=""
+          value=""
+          onChange={(e) => {
+            const name = e.target.value;
+            if (!name) return;
+            setSelectedTemplates((prev) =>
+              prev.includes(name) ? prev : [...prev, name]
+            );
+          }}
         >
-          <option value="">No template (no tasks)</option>
-          {PROJECT_TEMPLATE_NAMES.map((name) => (
+          <option value="">
+            {availableTemplates.length === 0
+              ? "All templates selected"
+              : "Add a template…"}
+          </option>
+          {availableTemplates.map((name) => (
             <option key={name} value={name}>
               {name}
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Optional. When set, tasks come from this template plus any match for
-          service + engagement type.
-        </p>
+        {selectedTemplates.map((name) => (
+          <input key={name} type="hidden" name="projectTemplates" value={name} />
+        ))}
+        {selectedTemplates.length > 0 && (
+          <ul className="mt-2 flex flex-col gap-1.5">
+            {selectedTemplates.map((name) => (
+              <li
+                key={name}
+                className="flex items-center justify-between gap-2 rounded-md border border-zinc-300 px-3 py-1.5 text-sm dark:border-zinc-700"
+              >
+                <span>{name}</span>
+                <button
+                  type="button"
+                  className="shrink-0 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                  onClick={() =>
+                    setSelectedTemplates((prev) => prev.filter((n) => n !== name))
+                  }
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <fieldset className="flex gap-4 text-sm">
@@ -278,7 +317,7 @@ export function ProjectForm({
             </p>
           )}
           {!state.project.tasksCreated && !state.project.tasksError && (
-            <p className="mt-2 text-xs opacity-80">No project template selected — no tasks created.</p>
+            <p className="mt-2 text-xs opacity-80">No project templates selected — no tasks created.</p>
           )}
           {state.project.tasksError && (
             <p className="mt-2 text-xs text-red-700 dark:text-red-400">
