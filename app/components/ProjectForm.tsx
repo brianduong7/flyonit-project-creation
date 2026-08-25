@@ -293,7 +293,32 @@ export function ProjectForm({
         <div className="rounded-md border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100">
           <p className="font-mono text-base font-semibold">{state.project.projectCode}</p>
           <p className="mt-1">{state.project.displayName}</p>
-          <p className="mt-2 font-mono text-xs opacity-80">{state.project.sharePointPath}</p>
+          {state.project.sharePointUrl ? (
+            <p className="mt-2 text-xs opacity-80">
+              SharePoint folder:{" "}
+              <a
+                href={state.project.sharePointUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                {state.project.sharePointPath}
+              </a>
+            </p>
+          ) : (
+            <p className="mt-2 font-mono text-xs opacity-80">{state.project.sharePointPath}</p>
+          )}
+          {state.project.sharePointError && (
+            <p className="mt-2 text-xs text-red-700 dark:text-red-400">
+              Project created, but SharePoint folder failed: {state.project.sharePointError}
+            </p>
+          )}
+          {state.project.chatTabError && (
+            <p className="mt-2 text-xs text-amber-800 dark:text-amber-300">
+              SharePoint folder is ready. Adding the Website tab in Teams needs
+              TeamsTab.ReadWriteForChat.All (waiting on admin): {state.project.chatTabError}
+            </p>
+          )}
           {state.project.erpNextName && (
             <p className="mt-2 text-xs opacity-80">
               Created in ERPNext as <span className="font-mono">{state.project.erpNextName}</span>

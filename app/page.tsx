@@ -68,7 +68,7 @@ export default async function Home() {
             Project register ({projects.length})
           </h2>
           <div className="mt-4 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
-            <table className="w-full min-w-[640px] text-left text-sm">
+            <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="bg-zinc-100 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
                 <tr>
                   <th className="px-4 py-2">Project</th>
@@ -76,6 +76,7 @@ export default async function Home() {
                   <th className="px-4 py-2">Type</th>
                   <th className="px-4 py-2">Status</th>
                   <th className="px-4 py-2">Chat</th>
+                  <th className="px-4 py-2">SharePoint</th>
                   <th className="px-4 py-2">Tasks</th>
                   <th className="px-4 py-2">Created</th>
                 </tr>
@@ -96,6 +97,25 @@ export default async function Home() {
                           <span className="font-mono">{local.chatTopic}</span>
                         ) : local?.chatError ? (
                           <span className="text-red-600 dark:text-red-400">failed</span>
+                        ) : (
+                          <span className="text-zinc-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-xs">
+                        {local?.sharePointUrl ? (
+                          <a
+                            href={local.sharePointUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline text-zinc-700 dark:text-zinc-300"
+                            title={local.sharePointPath}
+                          >
+                            Open
+                          </a>
+                        ) : local?.sharePointError ? (
+                          <span className="text-red-600 dark:text-red-400" title={local.sharePointError}>
+                            failed
+                          </span>
                         ) : (
                           <span className="text-zinc-400">—</span>
                         )}
