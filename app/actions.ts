@@ -10,6 +10,8 @@ import {
   buildDisplayName,
   sharePointWorkArea,
   sharePointPath,
+  sharePointParentFolder,
+  sharePointFolderName,
 } from "@/lib/naming/generate";
 import { addProject, getNextSequence, projectCodeExists, type ProjectRecord } from "@/lib/store";
 import {
@@ -20,7 +22,12 @@ import {
   listProjectTypes,
   projectCodeExistsInErpNext,
 } from "@/lib/erpnext/client";
-import { createGroupChat, DEFAULT_CHAT_OWNERS } from "@/lib/msgraph/client";
+import {
+  createGroupChat,
+  DEFAULT_CHAT_OWNERS,
+  createSharePointProjectFolder,
+  addChatWebsiteTab,
+} from "@/lib/msgraph/client";
 import {
   getProjectTemplateByName,
   matchProjectTemplate,
@@ -134,15 +141,51 @@ export async function createProject(
 
   const chatTopic = displayName;
   let chatError: string | undefined;
+  let chatId: string | undefined;
   try {
-    await createGroupChat({
+    const chat = await createGroupChat({
       topic: chatTopic,
       members: DEFAULT_CHAT_OWNERS,
     });
+    chatId = chat.chatId;
   } catch (err) {
     // Best-effort: the ERPNext project is the record that matters, so a chat
     // creation hiccup shouldn't fail the whole submission.
     chatError = err instanceof Error ? err.message : String(err);
+  }
+
+  const folderName = sharePointFolderName(displayName);
+  const parentFolder = sharePointParentFolder({
+    projectType: erpNextProjectType,
+    region,
+    clientOrDeptCode,
+  });
+  const computedSharePointPath = sharePointPath(workArea, parentFolder, folderName);
+  let sharePointUrl: string | undefined;
+  let sharePointError: string | undefined;
+  try {
+    const folder = await createSharePointProjectFolder({
+      workArea,
+      parentFolder,
+      folderName,
+    });
+    sharePointUrl = folder.webUrl;
+  } catch (err) {
+    sharePointError = err instanceof Error ? err.message : String(err);
+  }
+
+  // Best-effort until TeamsTab.ReadWriteForChat.All is admin-consented.
+  let chatTabError: string | undefined;
+  if (chatId && sharePointUrl) {
+    try {
+      await addChatWebsiteTab({
+        chatId,
+        displayName: "SharePoint",
+        url: sharePointUrl,
+      });
+    } catch (err) {
+      chatTabError = err instanceof Error ? err.message : String(err);
+    }
   }
 
   // Tasks only when at least one project template is selected. Then union
@@ -191,7 +234,10 @@ export async function createProject(
     scopeTitle,
     erpNextProjectType,
     portfolio,
-    sharePointPath: sharePointPath(workArea, region, projectCode),
+    sharePointPath: computedSharePointPath,
+    sharePointUrl,
+    sharePointError,
+    chatTabError,
     createdAt: new Date().toISOString(),
     erpNextName,
     chatTopic: chatError ? undefined : chatTopic,

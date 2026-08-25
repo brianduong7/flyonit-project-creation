@@ -17,6 +17,10 @@ export type ProjectRecord = {
   /** ERPNext's mandatory "Portfolio" link (custom_work_domain), e.g. "Client Delivery — Projects". */
   portfolio?: string;
   sharePointPath: string;
+  /** Clickable SharePoint folder URL, set after Graph creates (or finds) the folder. */
+  sharePointUrl?: string;
+  sharePointError?: string;
+  chatTabError?: string;
   createdAt: string;
   /** ERPNext's own internal document id (e.g. PROJ-0007), returned after a successful create. */
   erpNextName?: string;
