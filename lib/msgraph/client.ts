@@ -184,7 +184,6 @@ export const DEFAULT_CHAT_OWNERS: ChatMemberInput[] = [
   { email: "mahesh@flyonit.com.au", role: "owner" },
   { email: "rani@flyonit.com.au", role: "owner" },
   { email: "purba@flyonit.com.au", role: "owner" },
-  { email: "brian@flyonit.com.au", role: "owner" },
 ];
 
 function conversationMember(member: ChatMemberInput) {
