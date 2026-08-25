@@ -327,7 +327,7 @@ export function ProjectForm({
           {state.project.chatTopic && (
             <p className="mt-2 text-xs opacity-80">
               MS Teams group chat <span className="font-mono">{state.project.chatTopic}</span>{" "}
-              created (Mahesh, Rani and Purba added)
+              created (Mahesh, Rani, Purba and Brian added)
             </p>
           )}
           {state.project.chatError && (
