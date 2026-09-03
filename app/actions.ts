@@ -17,6 +17,8 @@ import { addProject, getNextSequence, projectCodeExists, type ProjectRecord } fr
 import {
   createErpNextProject,
   createErpNextTask,
+  findErpNextUser,
+  setErpNextProjectUsers,
   getMaxSequenceFromErpNext,
   listPortfolios,
   listProjectTypes,
@@ -24,7 +26,7 @@ import {
 } from "@/lib/erpnext/client";
 import {
   createGroupChat,
-  DEFAULT_CHAT_OWNERS,
+  mergeChatMembers,
   createSharePointProjectFolder,
   addChatWebsiteTab,
 } from "@/lib/msgraph/client";
@@ -59,6 +61,14 @@ export async function createProject(
     .getAll("projectTemplates")
     .map((v) => String(v).trim())
     .filter(Boolean);
+  const extraUserEmails = [
+    ...new Set(
+      formData
+        .getAll("extraUsers")
+        .map((v) => String(v).trim().toLowerCase())
+        .filter(Boolean)
+    ),
+  ];
 
   if (!isValidClientOrDeptCode(clientOrDeptCode)) {
     return { status: "error", message: "Client/dept code must be 3-8 letters or numbers." };
@@ -93,6 +103,10 @@ export async function createProject(
   if (!validPortfolios.includes(portfolio)) {
     return { status: "error", message: "Select a valid Portfolio." };
   }
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (extraUserEmails.some((email) => !emailPattern.test(email))) {
+    return { status: "error", message: "One or more extra user emails are invalid." };
+  }
 
   // Prefer the higher of local register + ERPNext so sequences stay unique on
   // Vercel, where data/projects.json cannot be written.
@@ -124,6 +138,10 @@ export async function createProject(
   const displayName = buildDisplayName(projectCode, scopeTitle);
   const workArea = sharePointWorkArea(erpNextProjectType);
 
+  const erpNextUsers: { user: string }[] = [];
+  const missingErpNextUsers: string[] = [];
+  let usersError: string | undefined;
+
   let erpNextName: string;
   try {
     const created = await createErpNextProject({
@@ -139,13 +157,36 @@ export async function createProject(
     };
   }
 
+  if (extraUserEmails.length > 0) {
+    for (const email of extraUserEmails) {
+      try {
+        const userName = await findErpNextUser(email);
+        if (userName) erpNextUsers.push({ user: userName });
+        else missingErpNextUsers.push(email);
+      } catch {
+        missingErpNextUsers.push(email);
+      }
+    }
+    if (erpNextUsers.length > 0) {
+      try {
+        await setErpNextProjectUsers(erpNextName, erpNextUsers);
+      } catch (err) {
+        usersError = err instanceof Error ? err.message : String(err);
+      }
+    }
+    if (missingErpNextUsers.length > 0) {
+      const missing = `Not found in ERPNext: ${missingErpNextUsers.join(", ")}`;
+      usersError = usersError ? `${usersError}; ${missing}` : missing;
+    }
+  }
+
   const chatTopic = displayName;
   let chatError: string | undefined;
   let chatId: string | undefined;
   try {
     const chat = await createGroupChat({
       topic: chatTopic,
-      members: DEFAULT_CHAT_OWNERS,
+      members: mergeChatMembers(extraUserEmails),
     });
     chatId = chat.chatId;
   } catch (err) {
@@ -245,6 +286,8 @@ export async function createProject(
     tasksCreated: tasksCreated || undefined,
     taskTemplateCode,
     tasksError,
+    extraUsers: extraUserEmails.length ? extraUserEmails : undefined,
+    usersError,
   };
 
   // Best-effort local register — must not fail the request after ERPNext create.
