@@ -91,18 +91,62 @@ export type ErpNextProjectPayload = {
   project_name: string;
   project_type?: string;
   custom_work_domain: string;
+  /** Project User child rows. `user` is the ERPNext User name (usually the email). */
+  users?: { user: string }[];
 };
+
+/** Looks up an ERPNext User by email. Returns the User name if they exist. */
+export async function findErpNextUser(email: string): Promise<string | null> {
+  const { url } = config();
+  const normalized = email.trim().toLowerCase();
+  const body = await erpnextFetch(
+    resourceUrl(url, "User", {
+      fields: JSON.stringify(["name", "email"]),
+      filters: JSON.stringify([
+        ["enabled", "=", 1],
+        ["email", "=", normalized],
+      ]),
+      limit_page_length: "1",
+    })
+  );
+  const row = ((body?.data ?? []) as { name: string; email?: string }[])[0];
+  if (row?.name) return row.name;
+  // Some sites store the User name as the email but keep a different Email field.
+  const byName = await erpnextFetch(
+    resourceUrl(url, "User", {
+      fields: JSON.stringify(["name", "email"]),
+      filters: JSON.stringify([
+        ["enabled", "=", 1],
+        ["name", "=", normalized],
+      ]),
+      limit_page_length: "1",
+    })
+  );
+  return ((byName?.data ?? []) as { name: string }[])[0]?.name ?? null;
+}
 
 /** Creates a Project in ERPNext. project_name carries the full ProjectCode - ScopeTitle display name. */
 export async function createErpNextProject(
   payload: ErpNextProjectPayload
 ): Promise<{ name: string }> {
   const { url } = config();
+  const { users: _users, ...project } = payload;
   const body = await erpnextFetch(resourceUrl(url, "Project"), {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(project),
   });
   return body.data;
+}
+
+export async function setErpNextProjectUsers(
+  projectName: string,
+  users: { user: string }[]
+): Promise<void> {
+  const { url } = config();
+  await erpnextFetch(resourceUrl(url, "Project") + "/" + encodeURIComponent(projectName), {
+    method: "PUT",
+    body: JSON.stringify({ users }),
+  });
 }
 
 /**

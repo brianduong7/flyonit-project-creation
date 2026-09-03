@@ -31,6 +31,9 @@ export type ProjectRecord = {
   tasksCreated?: number;
   taskTemplateCode?: string;
   tasksError?: string;
+  /** Extra emails pre-added to ERPNext Project Users and the Teams chat. */
+  extraUsers?: string[];
+  usersError?: string;
 };
 
 export async function listProjects(): Promise<ProjectRecord[]> {

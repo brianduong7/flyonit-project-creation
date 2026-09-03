@@ -67,6 +67,46 @@ async function graphFetch(path: string, init?: RequestInit) {
   return body;
 }
 
+export type DirectoryUser = {
+  displayName: string;
+  email: string;
+};
+
+/** Search Entra users by name or email. Needs User.Read.All. */
+export async function searchDirectoryUsers(query: string, limit = 8): Promise<DirectoryUser[]> {
+  const q = query.trim().replace(/["\\]/g, "");
+  if (q.length < 2) return [];
+
+  const params = new URLSearchParams({
+    $search: `"displayName:${q}" OR "mail:${q}" OR "userPrincipalName:${q}"`,
+    $select: "displayName,mail,userPrincipalName,accountEnabled",
+    $top: String(limit),
+    $count: "true",
+    $orderby: "displayName",
+  });
+  const body = await graphFetch(`/users?${params}`, {
+    headers: { ConsistencyLevel: "eventual" },
+  });
+
+  const rows = (body?.value ?? []) as {
+    displayName?: string;
+    mail?: string | null;
+    userPrincipalName?: string | null;
+    accountEnabled?: boolean;
+  }[];
+
+  return rows
+    .filter((u) => u.accountEnabled !== false)
+    .map((u) => {
+      const email = (u.mail || u.userPrincipalName || "").trim().toLowerCase();
+      return {
+        displayName: (u.displayName || email).trim(),
+        email,
+      };
+    })
+    .filter((u) => u.email.includes("@"));
+}
+
 async function graphFetchMaybe(path: string, init?: RequestInit) {
   const token = await getAccessToken();
   const res = await fetch(`${GRAPH_BASE}${path}`, {
@@ -177,7 +217,7 @@ export async function getTenantName(): Promise<string> {
   return body?.value?.[0]?.displayName ?? "";
 }
 
-export type ChatMemberInput = { email: string; role?: "owner" | "member" };
+export type ChatMemberInput = { email: string; role?: "owner" | "guest" };
 
 /** Always added to every project group chat, in addition to the project's own PM/team. */
 export const DEFAULT_CHAT_OWNERS: ChatMemberInput[] = [
@@ -189,9 +229,25 @@ export const DEFAULT_CHAT_OWNERS: ChatMemberInput[] = [
 function conversationMember(member: ChatMemberInput) {
   return {
     "@odata.type": "#microsoft.graph.aadUserConversationMember",
-    roles: member.role === "owner" ? ["owner"] : [],
+    // Group chats only accept owner (or guest). Empty roles fail create.
+    roles: member.role === "guest" ? ["guest"] : ["owner"],
     "user@odata.bind": `${GRAPH_BASE}/users('${member.email}')`,
   };
+}
+
+export function mergeChatMembers(extraEmails: string[]): ChatMemberInput[] {
+  const seen = new Set<string>();
+  const members: ChatMemberInput[] = [];
+  for (const member of [
+    ...DEFAULT_CHAT_OWNERS,
+    ...extraEmails.map((email) => ({ email, role: "owner" as const })),
+  ]) {
+    const key = member.email.trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    members.push({ ...member, email: key });
+  }
+  return members;
 }
 
 /**
