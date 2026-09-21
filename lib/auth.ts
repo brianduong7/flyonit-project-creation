@@ -3,6 +3,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 export const AUTH_COOKIE = "foit_session";
 export const AUTH_STATE_COOKIE = "foit_sso_state";
 export const AUTH_VERIFIER_COOKIE = "foit_sso_verifier";
+export const AUTH_REDIRECT_COOKIE = "foit_sso_redirect";
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
 
 const DEFAULT_ALLOWED_EMAILS = [
@@ -77,4 +78,26 @@ export function createPkceVerifier(): string {
 
 export function pkceChallenge(verifier: string): string {
   return createHash("sha256").update(verifier).digest("base64url");
+}
+
+/**
+ * Build the OAuth redirect URI from the request host so custom domains
+ * (forge.flyonit.com) and localhost stay on the same origin as the login click.
+ * MS_AUTH_REDIRECT_URI is only a fallback when the host cannot be determined.
+ */
+export function resolveAuthRedirectUri(request: Request): string {
+  const hostHeader =
+    request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  const protoHeader =
+    request.headers.get("x-forwarded-proto") ??
+    (hostHeader?.includes("localhost") ? "http" : "https");
+  const host = hostHeader?.split(",")[0]?.trim();
+  const proto = protoHeader.split(",")[0]?.trim();
+  if (host && proto) {
+    return `${proto}://${host}/auth/callback`;
+  }
+  if (process.env.MS_AUTH_REDIRECT_URI?.trim()) {
+    return process.env.MS_AUTH_REDIRECT_URI.trim();
+  }
+  throw new Error("Could not determine auth redirect host.");
 }
