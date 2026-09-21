@@ -7,9 +7,14 @@ const SESSION_TTL_SECONDS = 60 * 60 * 8;
 
 const DEFAULT_ALLOWED_EMAILS = [
   "mahesh@flyonit.com.au",
+  "mahesh@flyonit.com",
   "rani@flyonit.com.au",
+  "rani@flyonit.com",
   "purba@flyonit.com.au",
+  "purba@flyonit.com",
   "brian@flyonit.com.au",
+  "brian@flyonit.com",
+  "tim@flyonit.com.au",
   "tim@flyonit.com",
 ];
 
