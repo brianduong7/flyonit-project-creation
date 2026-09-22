@@ -2,10 +2,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   AUTH_COOKIE,
+  AUTH_REDIRECT_COOKIE,
   AUTH_STATE_COOKIE,
   AUTH_VERIFIER_COOKIE,
   createSession,
   isAllowedEmail,
+  resolveAuthRedirectUri,
 } from "@/lib/auth";
 
 type GraphUser = {
@@ -21,9 +23,11 @@ export async function GET(request: Request) {
   const cookieStore = await cookies();
   const expectedState = cookieStore.get(AUTH_STATE_COOKIE)?.value;
   const verifier = cookieStore.get(AUTH_VERIFIER_COOKIE)?.value;
+  const storedRedirectUri = cookieStore.get(AUTH_REDIRECT_COOKIE)?.value;
 
   cookieStore.delete(AUTH_STATE_COOKIE);
   cookieStore.delete(AUTH_VERIFIER_COOKIE);
+  cookieStore.delete(AUTH_REDIRECT_COOKIE);
 
   if (oauthError || !code || !returnedState || !verifier || returnedState !== expectedState) {
     redirect("/?sso_error=Microsoft sign-in was cancelled or could not be verified.");
@@ -32,7 +36,7 @@ export async function GET(request: Request) {
   const tenantId = process.env.MS_TENANT_ID;
   const clientId = process.env.MS_CLIENT_ID;
   const clientSecret = process.env.MS_CLIENT_SECRET;
-  const redirectUri = process.env.MS_AUTH_REDIRECT_URI;
+  const redirectUri = storedRedirectUri || resolveAuthRedirectUri(request);
   if (!tenantId || !clientId || !clientSecret || !redirectUri) {
     redirect("/?sso_error=Microsoft SSO is not configured.");
   }
