@@ -8,7 +8,8 @@ import {
 } from "@/lib/erpnext/client";
 import { ProjectForm } from "@/app/components/ProjectForm";
 import { MicrosoftLogin } from "@/app/components/MicrosoftLogin";
-import { AUTH_COOKIE, isValidSession } from "@/lib/auth";
+import { UserMenu } from "@/app/components/UserMenu";
+import { AUTH_COOKIE, getSession } from "@/lib/auth";
 
 export default async function Home({
   searchParams,
@@ -17,7 +18,8 @@ export default async function Home({
 }) {
   const cookieStore = await cookies();
   const params = await searchParams;
-  if (!isValidSession(cookieStore.get(AUTH_COOKIE)?.value)) {
+  const session = getSession(cookieStore.get(AUTH_COOKIE)?.value);
+  if (!session) {
     return <MicrosoftLogin error={params.sso_error} />;
   }
 
@@ -44,7 +46,10 @@ export default async function Home({
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="relative flex flex-1 flex-col items-center bg-zinc-50 font-sans dark:bg-black">
+      <div className="absolute right-4 top-4 z-20 sm:right-8 sm:top-8">
+        <UserMenu email={session.email} displayName={session.displayName} />
+      </div>
       <main className="flex w-full max-w-3xl flex-1 flex-col gap-10 px-6 py-16 sm:px-10">
         <header>
           <h1 className="font-mono text-3xl font-black uppercase tracking-[0.35em] text-zinc-900 dark:text-zinc-50">
