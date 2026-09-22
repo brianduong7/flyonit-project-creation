@@ -19,6 +19,11 @@ const DEFAULT_ALLOWED_EMAILS = [
   "tim@flyonit.com",
 ];
 
+export type SessionUser = {
+  email: string;
+  displayName: string;
+};
+
 export function allowedEmails(): string[] {
   return (process.env.SSO_ALLOWED_EMAILS
     ? process.env.SSO_ALLOWED_EMAILS.split(",")
@@ -44,28 +49,57 @@ function sign(value: string): string {
   return createHmac("sha256", sessionSecret()).update(value).digest("base64url");
 }
 
-export function createSession(email: string): string {
-  const emailPart = Buffer.from(email.trim().toLowerCase()).toString("base64url");
-  const payload = `${emailPart}.${Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS}`;
+export function createSession(user: SessionUser): string {
+  const data = Buffer.from(
+    JSON.stringify({
+      email: user.email.trim().toLowerCase(),
+      displayName: user.displayName.trim() || user.email.trim().toLowerCase(),
+    })
+  ).toString("base64url");
+  const payload = `${data}.${Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS}`;
   return `${payload}.${sign(payload)}`;
 }
 
-export function isValidSession(value: string | undefined): boolean {
-  if (!value) return false;
+export function getSession(value: string | undefined): SessionUser | null {
+  if (!value) return null;
   const parts = value.split(".");
-  if (parts.length !== 3) return false;
-  const [emailPart, expiry, signature] = parts;
-  const email = Buffer.from(emailPart, "base64url").toString("utf8");
-  if (!isAllowedEmail(email) || Number(expiry) < Math.floor(Date.now() / 1000)) {
-    return false;
-  }
-  const expected = sign(`${emailPart}.${expiry}`);
+  if (parts.length !== 3) return null;
+  const [data, expiry, signature] = parts;
+  const expected = sign(`${data}.${expiry}`);
   const actualBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expected);
-  return (
-    actualBuffer.length === expectedBuffer.length &&
-    timingSafeEqual(actualBuffer, expectedBuffer)
-  );
+  if (
+    actualBuffer.length !== expectedBuffer.length ||
+    !timingSafeEqual(actualBuffer, expectedBuffer)
+  ) {
+    return null;
+  }
+  if (Number(expiry) < Math.floor(Date.now() / 1000)) return null;
+
+  try {
+    // New format: JSON payload
+    const parsed = JSON.parse(Buffer.from(data, "base64url").toString("utf8")) as {
+      email?: string;
+      displayName?: string;
+    };
+    if (parsed.email && isAllowedEmail(parsed.email)) {
+      return {
+        email: parsed.email.trim().toLowerCase(),
+        displayName: (parsed.displayName || parsed.email).trim(),
+      };
+    }
+  } catch {
+    // Legacy format: email only
+    const email = Buffer.from(data, "base64url").toString("utf8").trim().toLowerCase();
+    if (isAllowedEmail(email)) {
+      return { email, displayName: email };
+    }
+  }
+  return null;
+}
+
+export function isValidSession(value: string | undefined): boolean {
+  return getSession(value) != null;
 }
 
 export function createSsoState(): string {

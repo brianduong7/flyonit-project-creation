@@ -107,6 +107,65 @@ export async function searchDirectoryUsers(query: string, limit = 8): Promise<Di
     .filter((u) => u.email.includes("@"));
 }
 
+export type SignedInUserProfile = {
+  email: string;
+  displayName: string;
+  givenName?: string;
+  surname?: string;
+  jobTitle?: string;
+  officeLocation?: string;
+  mobilePhone?: string;
+  userPrincipalName?: string;
+};
+
+/** Load profile fields for a signed-in allowlisted user. Needs User.Read.All. */
+export async function getSignedInUserProfile(email: string): Promise<SignedInUserProfile | null> {
+  const normalized = email.trim().toLowerCase();
+  const params = new URLSearchParams({
+    $select:
+      "displayName,givenName,surname,mail,userPrincipalName,jobTitle,officeLocation,mobilePhone",
+  });
+  const result = await graphFetchMaybe(`/users/${encodeURIComponent(normalized)}?${params}`);
+  if (!result.ok || !result.body) return null;
+  const u = result.body as {
+    displayName?: string;
+    givenName?: string;
+    surname?: string;
+    mail?: string | null;
+    userPrincipalName?: string | null;
+    jobTitle?: string | null;
+    officeLocation?: string | null;
+    mobilePhone?: string | null;
+  };
+  const resolvedEmail = (u.mail || u.userPrincipalName || normalized).trim().toLowerCase();
+  return {
+    email: resolvedEmail,
+    displayName: (u.displayName || resolvedEmail).trim(),
+    givenName: u.givenName || undefined,
+    surname: u.surname || undefined,
+    jobTitle: u.jobTitle || undefined,
+    officeLocation: u.officeLocation || undefined,
+    mobilePhone: u.mobilePhone || undefined,
+    userPrincipalName: u.userPrincipalName || undefined,
+  };
+}
+
+/** Fetch the user's Microsoft profile photo bytes, if any. */
+export async function getUserPhotoBytes(
+  email: string
+): Promise<{ bytes: ArrayBuffer; contentType: string } | null> {
+  const token = await getAccessToken();
+  const res = await fetch(
+    `${GRAPH_BASE}/users/${encodeURIComponent(email.trim().toLowerCase())}/photo/$value`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!res.ok) return null;
+  return {
+    bytes: await res.arrayBuffer(),
+    contentType: res.headers.get("content-type") || "image/jpeg",
+  };
+}
+
 async function graphFetchMaybe(path: string, init?: RequestInit) {
   const token = await getAccessToken();
   const res = await fetch(`${GRAPH_BASE}${path}`, {

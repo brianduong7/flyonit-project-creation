@@ -13,6 +13,7 @@ import {
 type GraphUser = {
   mail?: string | null;
   userPrincipalName?: string | null;
+  displayName?: string | null;
 };
 
 export async function GET(request: Request) {
@@ -62,17 +63,18 @@ export async function GET(request: Request) {
   }
 
   const userResponse = await fetch(
-    "https://graph.microsoft.com/v1.0/me?$select=mail,userPrincipalName",
+    "https://graph.microsoft.com/v1.0/me?$select=mail,userPrincipalName,displayName",
     { headers: { Authorization: `Bearer ${tokenBody.access_token}` } }
   );
   const user = (await userResponse.json().catch(() => null)) as GraphUser | null;
   const email = (user?.mail || user?.userPrincipalName || "").trim().toLowerCase();
+  const displayName = (user?.displayName || email).trim();
 
   if (!userResponse.ok || !isAllowedEmail(email)) {
     redirect("/?sso_error=Your Microsoft account is not allowed to use this app.");
   }
 
-  cookieStore.set(AUTH_COOKIE, createSession(email), {
+  cookieStore.set(AUTH_COOKIE, createSession({ email, displayName }), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
