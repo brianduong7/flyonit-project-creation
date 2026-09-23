@@ -280,9 +280,9 @@ export type ChatMemberInput = { email: string; role?: "owner" | "guest" };
 
 /** Always added to every project group chat, in addition to the project's own PM/team. */
 export const DEFAULT_CHAT_OWNERS: ChatMemberInput[] = [
-  { email: "mahesh@flyonit.com.au", role: "owner" },
-  { email: "rani@flyonit.com.au", role: "owner" },
-  { email: "purba@flyonit.com.au", role: "owner" },
+  { email: "mahesh@flyonit.com", role: "owner" },
+  { email: "rani@flyonit.com", role: "owner" },
+  { email: "purba@flyonit.com", role: "owner" },
 ];
 
 function conversationMember(member: ChatMemberInput) {
