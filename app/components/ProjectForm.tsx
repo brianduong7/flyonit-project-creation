@@ -500,8 +500,21 @@ export function ProjectForm({
           )}
           {state.project.chatTabError && (
             <p className="mt-2 text-xs text-amber-800 dark:text-amber-300">
-              SharePoint folder is ready. Adding the Website tab in Teams needs
-              TeamsTab.ReadWriteForChat.All (waiting on admin): {state.project.chatTabError}
+              Adding a Teams chat tab needs TeamsTab.ReadWriteForChat.All:{" "}
+              {state.project.chatTabError}
+            </p>
+          )}
+          {state.project.projectUrl && (
+            <p className="mt-2 text-xs opacity-80">
+              Project tab:{" "}
+              <a
+                href={state.project.projectUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                {state.project.projectUrl}
+              </a>
             </p>
           )}
           {state.project.erpNextName && (

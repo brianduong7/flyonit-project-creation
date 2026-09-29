@@ -29,6 +29,7 @@ import {
   mergeChatMembers,
   createSharePointProjectFolder,
   addChatWebsiteTab,
+  bulldeskProjectUrl,
 } from "@/lib/msgraph/client";
 import {
   getProjectTemplateByName,
@@ -216,18 +217,35 @@ export async function createProject(
   }
 
   // Best-effort until TeamsTab.ReadWriteForChat.All is admin-consented.
-  let chatTabError: string | undefined;
-  if (chatId && sharePointUrl) {
+  const projectUrl = bulldeskProjectUrl(erpNextName);
+  const chatTabErrors: string[] = [];
+  if (chatId) {
     try {
       await addChatWebsiteTab({
         chatId,
-        displayName: "SharePoint",
-        url: sharePointUrl,
+        displayName: "Project",
+        url: projectUrl,
       });
     } catch (err) {
-      chatTabError = err instanceof Error ? err.message : String(err);
+      chatTabErrors.push(
+        `Project tab: ${err instanceof Error ? err.message : String(err)}`
+      );
+    }
+    if (sharePointUrl) {
+      try {
+        await addChatWebsiteTab({
+          chatId,
+          displayName: "SharePoint",
+          url: sharePointUrl,
+        });
+      } catch (err) {
+        chatTabErrors.push(
+          `SharePoint tab: ${err instanceof Error ? err.message : String(err)}`
+        );
+      }
     }
   }
+  const chatTabError = chatTabErrors.length ? chatTabErrors.join("; ") : undefined;
 
   // Tasks only when at least one project template is selected. Then union
   // all selected templates + service/engagement auto-match (deduped by subject).
@@ -278,6 +296,7 @@ export async function createProject(
     sharePointPath: computedSharePointPath,
     sharePointUrl,
     sharePointError,
+    projectUrl,
     chatTabError,
     createdAt: new Date().toISOString(),
     erpNextName,
