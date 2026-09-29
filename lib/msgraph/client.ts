@@ -249,6 +249,13 @@ export async function createSharePointProjectFolder(params: {
   };
 }
 
+/** Bulldesk project page for an ERPNext project id such as PROJ-0028. */
+const BULLDESK_PROJECT_ORIGIN = "https://bulldesk.flyonit.com";
+
+export function bulldeskProjectUrl(projectId: string): string {
+  return `${BULLDESK_PROJECT_ORIGIN}/projects/${encodeURIComponent(projectId)}`;
+}
+
 /** Built-in Teams "Website" tab. Needs TeamsTab.ReadWriteForChat.All (application). */
 const TEAMS_WEBSITE_APP_ID = "com.microsoft.teamspace.tab.web";
 

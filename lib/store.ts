@@ -20,6 +20,8 @@ export type ProjectRecord = {
   /** Clickable SharePoint folder URL, set after Graph creates (or finds) the folder. */
   sharePointUrl?: string;
   sharePointError?: string;
+  /** Bulldesk project page linked from the Teams chat Project tab. */
+  projectUrl?: string;
   chatTabError?: string;
   createdAt: string;
   /** ERPNext's own internal document id (e.g. PROJ-0007), returned after a successful create. */
